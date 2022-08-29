@@ -17,42 +17,10 @@ unsigned int height;
 XButtonEvent start;
 XEvent event;
 
-/*
-void OnMapRequest(XMapRequestEvent e) {
-  XGetWindowAttributes(display, e.window, &attr); 
-  
-  const Window frame = XCreateSimpleWindow(
-      display,
-      root,
-      attr.x,
-      attr.y,
-      attr.width,
-      attr.height,
-      border_width,
-      border_color,
-      bg_color
-    );
-
-  XSelectInput(
-      display,
-      frame,
-      SubstructureRedirectMask | SubstructureNotifyMask);
-
-  XAddToSaveSet(display, e.window);
-  
-  XReparentWindow(display, e.window, frame, 0, 0);
-
-  XMapWindow(display, e.window);
-}
-*/
-
 void kill(Window w) {
   if (w == None) return;
-
-
   // Since I have no idea how to handle this, I took (stole) it from:
   //  https://github.com/dacousb/clarawm/blob/master/clarawm.c
- 
   XEvent ke;
   ke.type = ClientMessage;
   ke.xclient.window = w;
@@ -63,16 +31,30 @@ void kill(Window w) {
   XSendEvent(display, w, False, NoEventMask, &ke);
 }
 
-void spawn(char **app) {
-  // Also taken from clarawm cuz me noob :/
+void spawn(char **args) {
   if (fork() == 0) {
     setsid();
-    execvp(app[0], app);
+    execvp(args[0], args);
     exit(EXIT_SUCCESS);
   }
 }
 
+void OnButtonPress(Window w) {
+  if (w == None) return;
+  XRaiseWindow(display, w);
+  XGetWindowAttributes(display, w, &attr);
+}
+
+void err(char *msg) {
+  fprintf(stderr, " -> weem ERROR: %s\n", msg);
+}
+
+void logger(char *msg) {
+  fprintf(stdout, " -> weem INFO: %s\n", msg);
+}
+
 void loop() {
+  logger("Entered loop\n");
   while(true) {
     XEvent e;
     XKeyEvent key;
@@ -81,20 +63,30 @@ void loop() {
     switch(e.type) {
       case KeyPress:
         key = e.xkey;
-        if (key.keycode == XKeysymToKeycode(display, launch_term))
-          spawn(term);
-        if (key.keycode == XKeysymToKeycode(display, launch_menu))
-          spawn(menu);
-        if (key.keycode == XKeysymToKeycode(display, launch_browser))
-          spawn(browser);
-        if (key.keycode == XKeysymToKeycode(display, launch_screenshot))
-          spawn(screenshot);
-        if (key.keycode == XKeysymToKeycode(display, kill_window)) {
+        for (int i = 0; i < num_keys; i ++) {
+          if (key.keycode == XKeysymToKeycode(display, keymap[i].keysym)) {
+            spawn(keymap[i].cmd);
+            break;
+          }
+        }
+        if (key.keycode == XKeysymToKeycode(display, kill_win)) {
           kill(e.xbutton.subwindow);
         }
-     // case MapRequest:
-     //     OnMapRequest(e.xmaprequest);
-     //    break;
+      case ButtonPress:
+        OnButtonPress(e.xbutton.subwindow);
+        start = e.xbutton;
+        break;
+      case MotionNotify:
+        if (start.subwindow != None) {
+          int xdiff = e.xbutton.x_root - start.x_root;
+          int ydiff = e.xbutton.y_root - start.y_root;
+          XMoveResizeWindow(display, start.subwindow,
+            attr.x + (start.button==1 ? xdiff : 0),
+            attr.y + (start.button==1 ? ydiff : 0),
+            MAX(1, attr.width + (start.button==3 ? xdiff : 0)),
+            MAX(1, attr.height + (start.button==3 ? ydiff : 0)));    
+        } 
+      break;
     }
   }
 }
@@ -103,24 +95,24 @@ void init() {
   display = XOpenDisplay(NULL);
 
   if (display == NULL) {
-    printf(" -> Error: Failed to open display");
+    err("Failed to open display");
   } else {
     root = XDefaultRootWindow(display);
     screen = XDefaultScreen(display);
 
     height = XDisplayHeight(display, screen);
     width = XDisplayWidth(display, screen);
-    
-    printf(" -> Info:\n h: %d | w: %d\n", height, width);
 
-    XGrabKey(display, XKeysymToKeycode(display, launch_term), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(display, XKeysymToKeycode(display, launch_menu), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(display, XKeysymToKeycode(display, launch_browser), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(display, XKeysymToKeycode(display, kill_window), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(display, XKeysymToKeycode(display, quit), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(display, XKeysymToKeycode(display, launch_screenshot), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
-    XGrabButton(display, AnyButton, Mod4Mask, root, True, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | OwnerGrabButtonMask,
-                GrabModeAsync, GrabModeAsync, None, None);
+    // Grab
+    for (int i = 0; i < num_keys; i ++) {
+      XGrabKey(display, XKeysymToKeycode(display, keymap[i].keysym), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
+    }
+
+    XGrabKey(display, XKeysymToKeycode(display, kill_win), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
+    
+    XGrabButton(display, AnyButton, Mod4Mask, root, True, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | OwnerGrabButtonMask, 
+        GrabModeAsync, GrabModeAsync, None, None);
+
   }
 }
 
