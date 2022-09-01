@@ -3,16 +3,12 @@
 
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
+#include "main.h"
 
 #define num_keys 4
-#define MAX(a, b) ((a) > (b) ? (a) : (b))
-
-typedef struct KeyMap {
-  KeySym keysym;
-  char *cmd[10];
-} KeyMap;
 
 KeySym kill_win = XK_W;
+KeySym die = XK_K;
 
 KeyMap keymap[num_keys] = {
   // Terminal

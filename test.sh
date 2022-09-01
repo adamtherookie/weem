@@ -1,7 +1,7 @@
 #!/bin/sh
 
 ./build.sh
-Xephyr -br -ac -noreset -screen 1366x768 :1 &
+Xephyr -br -ac -noreset -screen 800x600 :1 &
 
 sleep 1
 
