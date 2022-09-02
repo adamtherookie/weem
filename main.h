@@ -25,14 +25,22 @@ typedef struct KeyMap {
   char *cmd[10];
 } KeyMap;
 
+typedef struct ChangeDesktop {
+  KeySym keysym;
+  int desktop;
+} ChangeDesktop;
+
+typedef struct Client Client;
 typedef struct Client {
-  unsigned int desktop;
+  Client *next;
+  Client *prev;
+
   Window window;
 } Client;
 
 typedef struct Desktop {
-  unsigned int num_wins;
-  Client clients[MAX_WINS];
+  Client *head;
+  Client *current;
 } Desktop;
 
 #endif

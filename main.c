@@ -17,7 +17,11 @@ XButtonEvent start;
 XEvent e;
 XKeyEvent key;
 
-Desktop desktops[NUM_DESKTOPS];
+static Client *head;
+static Client *current;
+
+static Desktop desktops[NUM_DESKTOPS];
+int current_desktop = 0;
 
 void logger(char *msg) {
   printf(ANSI_COLOR_GREEN " -> weem INFO: %s\n" ANSI_COLOR_RESET, msg);
@@ -49,6 +53,65 @@ void spawn(char **args) {
   }
 }
 
+void AddWin(Window w) {
+  Client *c;
+
+  if (!(c = (Client *)calloc(1, sizeof(Client))))
+    err("calloc error");
+  
+  if (head == NULL) {
+    // no wins in desktop, so this one will be head
+    c->next = NULL;
+    c->prev = NULL;
+    c->window = w;
+    
+    head = c;
+  } else {
+    Client *t;
+    for(t = head; t->next; t=t->next);
+
+    c->next = NULL;
+    c->prev = t;
+    c->window = w;
+
+    c->next = c;
+  }
+
+  current = c;
+}
+
+void ChangeDesk(int num) {
+  Client *c;
+
+  if (num == current_desktop) {
+    logger("nvm we're already here");
+    return;
+  }
+
+  // Unmap windows
+  logger("unmapping windows");
+  if (head != NULL) {
+    for (c = head; c; c = c->next) {
+      XUnmapWindow(display, c->window);
+    }
+  }
+
+  desktops[current_desktop].head = head;
+  desktops[current_desktop].current = current;
+
+  head = desktops[num].head;
+  current = desktops[num].current;
+  current_desktop = num;
+  
+  logger("mapping new windows");
+  // Map windows
+  if (head != NULL) {
+    for (c = head; c; c = c->next) {
+      XMapWindow(display, c->window);
+    }
+  }
+}
+
 static inline void OnButtonPress(XEvent e) {
   logger("Event ButtonPress Called");
   if (e.xbutton.subwindow == None) return;
@@ -72,6 +135,12 @@ static inline void OnKeyPress(XEvent e) {
   }
   if (key.keycode == XKeysymToKeycode(display, kill_win)) {
     kill(e.xbutton.subwindow);
+  }
+  for (int i = 0; i < NUM_DESKTOPS; i ++) {
+    if (key.keycode == XKeysymToKeycode(display, changedesktop[i].keysym)) {
+      logger("Changing desktop");
+      ChangeDesk(changedesktop[i].desktop);
+    }
   }
   if (key.keycode == XKeysymToKeycode(display, die)) {
     logger("kill");
@@ -104,6 +173,7 @@ static inline void OnMapRequest(XEvent e) {
   XSetWindowBorderWidth(display, e.xmaprequest.window, 3);
   XSetWindowBorder(display, e.xmaprequest.window, border_color);
 
+  AddWin(e.xmaprequest.window);
   XMapWindow(display, e.xmaprequest.window);
 }
 
@@ -157,16 +227,15 @@ void init() {
       XGrabKey(display, XKeysymToKeycode(display, keymap[i].keysym), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
     }
 
+    for (int i = 0; i < NUM_DESKTOPS; i ++) {
+      XGrabKey(display, XKeysymToKeycode(display, changedesktop[i].keysym), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
+    }
+
     XGrabKey(display, XKeysymToKeycode(display, kill_win), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
     XGrabKey(display, XKeysymToKeycode(display, die), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
 
     XGrabButton(display, AnyButton, Mod4Mask, root, True, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | OwnerGrabButtonMask, 
         GrabModeAsync, GrabModeAsync, None, None);
-
-    // INIT ALL DESKTOPS TO 0
-    for (int i = 0; i < NUM_DESKTOPS; i ++) {
-      desktops[i].num_wins = 0;
-    }
 
     XSelectInput(display, root, SubstructureNotifyMask | SubstructureRedirectMask);
   }

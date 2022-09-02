@@ -25,6 +25,29 @@ KeyMap keymap[num_keys] = {
   [3].cmd = { "flameshot", "gui", NULL }
 };
 
+ChangeDesktop changedesktop[NUM_DESKTOPS] = {
+    [0].keysym = XK_1,
+  [0].desktop = 0,
+    [1].keysym = XK_2,
+  [1].desktop = 1,
+    [2].keysym = XK_3,
+  [2].desktop = 2,
+    [3].keysym = XK_4,
+  [3].desktop = 3,
+    [4].keysym = XK_5,
+  [4].desktop = 4,
+    [5].keysym = XK_6,
+  [5].desktop = 5,
+    [6].keysym = XK_7,
+  [6].desktop = 6,
+    [7].keysym = XK_8,
+  [7].desktop = 7,
+    [8].keysym = XK_9,
+  [8].desktop = 8,
+    [9].keysym = XK_0,
+  [9].desktop = 9,
+};
+
 unsigned long border_color = 0x999f63;
 
 #endif
