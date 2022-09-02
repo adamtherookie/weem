@@ -68,13 +68,13 @@ void AddWin(Window w) {
     head = c;
   } else {
     Client *t;
-    for(t = head; t->next; t=t->next);
+    for(t = head; t->next; t = t->next);
 
     c->next = NULL;
     c->prev = t;
     c->window = w;
 
-    c->next = c;
+    t->next = c;
   }
 
   current = c;
@@ -170,10 +170,11 @@ static inline void OnMapRequest(XEvent e) {
   if (!XGetWindowAttributes(display, e.xmaprequest.window, &attributes) || attributes.override_redirect) 
     return;
   
-  XSetWindowBorderWidth(display, e.xmaprequest.window, 3);
+  XSetWindowBorderWidth(display, e.xmaprequest.window, border_width);
   XSetWindowBorder(display, e.xmaprequest.window, border_color);
 
   AddWin(e.xmaprequest.window);
+  XMoveWindow(display, e.xmaprequest.window, width/2 - attributes.width/2, height/2 - attributes.height/2);
   XMapWindow(display, e.xmaprequest.window);
 }
 
@@ -238,6 +239,7 @@ void init() {
         GrabModeAsync, GrabModeAsync, None, None);
 
     XSelectInput(display, root, SubstructureNotifyMask | SubstructureRedirectMask);
+    system("~/.config/weem/weemrc");
   }
 }
 
