@@ -2,7 +2,10 @@
 #include "main.h"
 
 Display *display;
-int screen;
+Screen *screen;
+
+int scr_num;
+
 Window root;
 
 XWindowAttributes attr;
@@ -50,7 +53,9 @@ static inline void OnButtonPress(XEvent e) {
   logger("Event ButtonPress Called");
   if (e.xbutton.subwindow == None) return;
   start = e.xbutton;
+  
   XRaiseWindow(display, start.subwindow);
+  XSetInputFocus(display, start.subwindow, RevertToParent, CurrentTime);
   XGetWindowAttributes(display, start.subwindow, &attr);
   logger("Event ButtonPress Finished");
 }
@@ -58,6 +63,7 @@ static inline void OnButtonPress(XEvent e) {
 static inline void OnKeyPress(XEvent e) {
   logger("Event KeyPress Called");
   key = e.xkey;
+
   for (int i = 0; i < num_keys; i ++) {
     if (key.keycode == XKeysymToKeycode(display, keymap[i].keysym)) {
       spawn(keymap[i].cmd);
@@ -72,6 +78,7 @@ static inline void OnKeyPress(XEvent e) {
     XCloseDisplay(display);
     exit(EXIT_SUCCESS);
   }
+
   logger("Event KeyPress Finished");
 }
 
@@ -87,6 +94,35 @@ static inline void OnMotionNotify(XEvent e) {
       MAX(1, attr.height + (start.button == 3 ? ydiff : 0)));
 }
 
+static inline void OnMapRequest(XEvent e) {
+  logger("Map request");
+  static XWindowAttributes attributes;
+
+  if (!XGetWindowAttributes(display, e.xmaprequest.window, &attributes) || attributes.override_redirect) 
+    return;
+  
+  XSetWindowBorderWidth(display, e.xmaprequest.window, 3);
+  XSetWindowBorder(display, e.xmaprequest.window, border_color);
+
+  XMapWindow(display, e.xmaprequest.window);
+}
+
+static inline void OnConfigureRequest(XEvent e) {
+  logger("Configure request");
+  XWindowChanges changes;
+
+  XConfigureRequestEvent event = e.xconfigurerequest;
+  changes.x = event.x;
+  changes.y = event.y;
+  changes.width = event.width;
+  changes.height = event.height;
+  changes.border_width = event.border_width;
+  changes.sibling = event.above;
+  changes.stack_mode = event.detail;
+
+  XConfigureWindow(display, event.window, event.value_mask, &changes);
+}
+
 void loop() {
   logger("Entered loop\n");
   while(true) {
@@ -97,6 +133,8 @@ void loop() {
       case ButtonPress: OnButtonPress(e); break;
       case MotionNotify: OnMotionNotify(e); break;
       case ButtonRelease: start.subwindow = None; break;
+      case MapRequest: OnMapRequest(e); break;
+      case ConfigureRequest: OnConfigureRequest(e); break;
     }
   }
 }
@@ -107,11 +145,12 @@ void init() {
   if (display == NULL) {
     err("Failed to open display");
   } else {
-    root = XDefaultRootWindow(display);
-    screen = XDefaultScreen(display);
+    root = DefaultRootWindow(display);
+    screen = DefaultScreenOfDisplay(display);
+    scr_num = XDefaultScreen(display);
 
-    height = XDisplayHeight(display, screen);
-    width = XDisplayWidth(display, screen);
+    height = XDisplayHeight(display, scr_num);
+    width = XDisplayWidth(display, scr_num);
 
     // Grab
     for (int i = 0; i < num_keys; i ++) {
@@ -128,6 +167,8 @@ void init() {
     for (int i = 0; i < NUM_DESKTOPS; i ++) {
       desktops[i].num_wins = 0;
     }
+
+    XSelectInput(display, root, SubstructureNotifyMask | SubstructureRedirectMask);
   }
 }
 

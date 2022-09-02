@@ -25,5 +25,7 @@ KeyMap keymap[num_keys] = {
   [3].cmd = { "flameshot", "gui", NULL }
 };
 
+unsigned long border_color = 0x999f63;
+
 #endif
 
