@@ -48,8 +48,9 @@ ChangeDesktop changedesktop[NUM_DESKTOPS] = {
   [9].desktop = 9,
 };
 
-unsigned int border_width = 3;
-unsigned long border_color = 0x999f63;
+unsigned int border_width    = 3;
+unsigned long border_focus   = 0x999f63;
+unsigned long border_unfocus = 0xafafaf;
 
 #endif
 

@@ -17,8 +17,8 @@ XButtonEvent start;
 XEvent e;
 XKeyEvent key;
 
-static Client *head;
-static Client *current;
+static Client *head = NULL;
+static Client *current = NULL;
 
 static Desktop desktops[NUM_DESKTOPS];
 int current_desktop = 0;
@@ -45,11 +45,40 @@ void kill(Window w) {
   XSendEvent(display, w, False, NoEventMask, &ke);
 }
 
+void KillClient() {
+  if (current == NULL) return;
+  XEvent ke;
+	ke.type = ClientMessage;
+	ke.xclient.window = current->window;
+	ke.xclient.message_type = XInternAtom(display, "WM_PROTOCOLS", True);
+	ke.xclient.format = 32;
+	ke.xclient.data.l[0] = XInternAtom(display, "WM_DELETE_WINDOW", True);
+	ke.xclient.data.l[1] = CurrentTime;
+	XSendEvent(display, current->window, False, NoEventMask, &ke);
+  kill(current->window);
+}
+
 void spawn(char **args) {
   if (fork() == 0) {
     setsid();
     execvp(args[0], args);
     exit(EXIT_SUCCESS);
+  }
+}
+
+void UpdateCurrent() {
+  Client *c;
+
+  for (c = head; c; c = c->next) {
+    if (current == c) {
+      logger("Raising window");
+      XSetWindowBorderWidth(display, c->window, border_width);
+      XSetWindowBorder(display, c->window, border_focus);
+      XSetInputFocus(display, c->window, RevertToParent, CurrentTime);
+      XRaiseWindow(display, c->window);
+    } else {
+      XSetWindowBorder(display, c->window, border_unfocus);
+    }
   }
 }
 
@@ -78,6 +107,40 @@ void AddWin(Window w) {
   }
 
   current = c;
+}
+
+void RemoveWindow(Window w) {
+  Client *c;
+  
+  for(c = head; c; c = c->next) {
+    if (c->window == w) {
+      if (c->prev == NULL && c->next == NULL) {
+        logger("prev null and next null");
+        free(head);
+        head = NULL;
+        current = NULL;
+        return;
+      }
+      if (c->prev == NULL) {
+        logger("prev null");
+        head = c->next;
+        c->next->prev = NULL;
+        current = c->next;
+      } else if(c->next == NULL) {
+        logger("next null");
+        c->prev->next = NULL;
+        current = c->prev;
+      } else {
+        logger("none null");
+        c->prev->next = c->next;
+        c->next->prev = c->prev;
+        current = c->prev;
+      }
+
+      free(c);
+      return;
+    }
+  }
 }
 
 void ChangeDesk(int num) {
@@ -110,21 +173,28 @@ void ChangeDesk(int num) {
       XMapWindow(display, c->window);
     }
   }
+
+  UpdateCurrent();
 }
 
 static inline void OnButtonPress(XEvent e) {
-  logger("Event ButtonPress Called");
   if (e.xbutton.subwindow == None) return;
   start = e.xbutton;
   
-  XRaiseWindow(display, start.subwindow);
-  XSetInputFocus(display, start.subwindow, RevertToParent, CurrentTime);
+  // Hacky way to get current client
+  Client *c;
+
+  for (c = head; c; c = c->next) {
+    if (c->window == start.subwindow) {
+      current = c;
+      UpdateCurrent();
+    }
+  }
+
   XGetWindowAttributes(display, start.subwindow, &attr);
-  logger("Event ButtonPress Finished");
 }
 
 static inline void OnKeyPress(XEvent e) {
-  logger("Event KeyPress Called");
   key = e.xkey;
 
   for (int i = 0; i < num_keys; i ++) {
@@ -133,22 +203,23 @@ static inline void OnKeyPress(XEvent e) {
       break;
     }
   }
+
   if (key.keycode == XKeysymToKeycode(display, kill_win)) {
-    kill(e.xbutton.subwindow);
+    KillClient();
   }
+
   for (int i = 0; i < NUM_DESKTOPS; i ++) {
     if (key.keycode == XKeysymToKeycode(display, changedesktop[i].keysym)) {
       logger("Changing desktop");
       ChangeDesk(changedesktop[i].desktop);
     }
   }
+  
   if (key.keycode == XKeysymToKeycode(display, die)) {
     logger("kill");
     XCloseDisplay(display);
     exit(EXIT_SUCCESS);
   }
-
-  logger("Event KeyPress Finished");
 }
 
 static inline void OnMotionNotify(XEvent e) {
@@ -170,12 +241,11 @@ static inline void OnMapRequest(XEvent e) {
   if (!XGetWindowAttributes(display, e.xmaprequest.window, &attributes) || attributes.override_redirect) 
     return;
   
-  XSetWindowBorderWidth(display, e.xmaprequest.window, border_width);
-  XSetWindowBorder(display, e.xmaprequest.window, border_color);
-
   AddWin(e.xmaprequest.window);
   XMoveWindow(display, e.xmaprequest.window, width/2 - attributes.width/2, height/2 - attributes.height/2);
   XMapWindow(display, e.xmaprequest.window);
+
+  UpdateCurrent();
 }
 
 static inline void OnConfigureRequest(XEvent e) {
@@ -194,6 +264,29 @@ static inline void OnConfigureRequest(XEvent e) {
   XConfigureWindow(display, event.window, event.value_mask, &changes);
 }
 
+static inline void OnDestroyNotify(XEvent e) {
+  logger("Destroy notify");
+  Client *c;
+
+  int i = 0;
+  for(c = head; c; c = c->next) {
+    if (e.xdestroywindow.window == c->window) {
+      i ++;
+    } 
+  }
+
+  if (i == 0) {
+    logger("Nothing here");
+    return;
+  } 
+
+  logger("time to remove window");
+  RemoveWindow(e.xdestroywindow.window);
+  logger("time to update");
+  UpdateCurrent();
+  logger("Removed window");
+}
+
 void loop() {
   logger("Entered loop\n");
   while(true) {
@@ -206,6 +299,7 @@ void loop() {
       case ButtonRelease: start.subwindow = None; break;
       case MapRequest: OnMapRequest(e); break;
       case ConfigureRequest: OnConfigureRequest(e); break;
+      case DestroyNotify: OnDestroyNotify(e); break;
     }
   }
 }
@@ -230,7 +324,11 @@ void init() {
 
     for (int i = 0; i < NUM_DESKTOPS; i ++) {
       XGrabKey(display, XKeysymToKeycode(display, changedesktop[i].keysym), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
+      desktops[i].head = head;
+      desktops[i].current = current;
     }
+
+    ChangeDesk(0);
 
     XGrabKey(display, XKeysymToKeycode(display, kill_win), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
     XGrabKey(display, XKeysymToKeycode(display, die), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
@@ -239,7 +337,7 @@ void init() {
         GrabModeAsync, GrabModeAsync, None, None);
 
     XSelectInput(display, root, SubstructureNotifyMask | SubstructureRedirectMask);
-    system("~/.config/weem/weemrc");
+    //system("~/.config/weem/weemrc");
   }
 }
 
