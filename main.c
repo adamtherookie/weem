@@ -24,11 +24,11 @@ static Desktop desktops[NUM_DESKTOPS];
 int current_desktop = 0;
 
 void logger(char *msg) {
-  printf(ANSI_COLOR_GREEN " -> weem INFO: %s\n" ANSI_COLOR_RESET, msg);
+  printf(ANSI_COLOR_GREEN " -> weem INFO:" ANSI_COLOR_RESET " %s\n", msg);
 }
 
 void err(char *msg) {
-  printf(ANSI_COLOR_RED " -> weem ERROR: %s\n" ANSI_COLOR_RESET, msg);
+  printf(ANSI_COLOR_RED " -> weem ERROR:" ANSI_COLOR_RESET "%s\n" , msg);
 }
 
 void kill(Window w) {
