@@ -8,6 +8,7 @@
 #define num_keys 4
 
 KeySym kill_win = XK_W;
+KeySym fullscreen = XK_F;
 KeySym die = XK_K;
 
 KeyMap keymap[num_keys] = {

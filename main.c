@@ -23,15 +23,17 @@ static Client *current = NULL;
 static Desktop desktops[NUM_DESKTOPS];
 int current_desktop = 0;
 
-void logger(char *msg) {
+unsigned int error_occurred = 0;
+
+static inline void logger(char *msg) {
   printf(ANSI_COLOR_GREEN " -> weem INFO:" ANSI_COLOR_RESET " %s\n", msg);
 }
 
-void err(char *msg) {
+static inline void err(char *msg) {
   printf(ANSI_COLOR_RED " -> weem ERROR:" ANSI_COLOR_RESET "%s\n" , msg);
 }
 
-void kill(Window w) {
+static inline void kill(Window w) {
   if (w == None) return;
   // Since I have no idea how to handle this, I took (stole) it from:
   //  https://github.com/dacousb/clarawm/blob/master/clarawm.c
@@ -45,7 +47,7 @@ void kill(Window w) {
   XSendEvent(display, w, False, NoEventMask, &ke);
 }
 
-void KillClient() {
+static inline void KillClient() {
   if (current == NULL) return;
   XEvent ke;
 	ke.type = ClientMessage;
@@ -58,7 +60,7 @@ void KillClient() {
   kill(current->window);
 }
 
-void spawn(char **args) {
+static inline void spawn(char **args) {
   if (fork() == 0) {
     setsid();
     execvp(args[0], args);
@@ -66,7 +68,7 @@ void spawn(char **args) {
   }
 }
 
-void UpdateCurrent() {
+static inline void UpdateCurrent() {
   Client *c;
 
   for (c = head; c; c = c->next) {
@@ -82,7 +84,7 @@ void UpdateCurrent() {
   }
 }
 
-void AddWin(Window w) {
+static inline void AddWin(Window w) {
   Client *c;
 
   if (!(c = (Client *)calloc(1, sizeof(Client))))
@@ -109,7 +111,7 @@ void AddWin(Window w) {
   current = c;
 }
 
-void RemoveWindow(Window w) {
+static inline void RemoveWindow(Window w) {
   Client *c;
   
   for(c = head; c; c = c->next) {
@@ -143,7 +145,7 @@ void RemoveWindow(Window w) {
   }
 }
 
-void ChangeDesk(int num) {
+static inline void ChangeDesk(int num) {
   Client *c;
 
   if (num == current_desktop) {
@@ -177,7 +179,31 @@ void ChangeDesk(int num) {
   UpdateCurrent();
 }
 
+static inline void FullscreenWindow() {
+  logger("going to fullscreen");
+  if(current == NULL) return;
+
+  Window root = DefaultRootWindow(display);
+
+  int screen = DefaultScreen(display);
+  int screenWidth = DisplayWidth(display, screen);
+  int screenHeight = DisplayHeight(display, screen);
+
+  XMoveResizeWindow(display, current->window, -border_width, -border_width, screenWidth + border_width, screenHeight + border_width);
+  XMapWindow(display, current->window);
+
+  UpdateCurrent();
+}
+
+static inline int ErrorHandler(Display *display, XErrorEvent *event) {
+  if(event->error_code == BadWindow) {
+    error_occurred = 1;
+  }
+  return 0;
+}
+
 static inline void OnButtonPress(XEvent e) {
+  logger("button press");
   if (e.xbutton.subwindow == None) return;
   start = e.xbutton;
   
@@ -195,6 +221,7 @@ static inline void OnButtonPress(XEvent e) {
 }
 
 static inline void OnKeyPress(XEvent e) {
+  logger("keeey preess");
   key = e.xkey;
 
   for (int i = 0; i < num_keys; i ++) {
@@ -206,6 +233,10 @@ static inline void OnKeyPress(XEvent e) {
 
   if (key.keycode == XKeysymToKeycode(display, kill_win)) {
     KillClient();
+  }
+
+  if (key.keycode == XKeysymToKeycode(display, fullscreen)) {
+    FullscreenWindow();
   }
 
   for (int i = 0; i < NUM_DESKTOPS; i ++) {
@@ -223,6 +254,7 @@ static inline void OnKeyPress(XEvent e) {
 }
 
 static inline void OnMotionNotify(XEvent e) {
+  logger("Mooootioooon");
   if (start.subwindow == None) return;
 
   int xdiff = e.xbutton.x_root - start.x_root;
@@ -250,6 +282,9 @@ static inline void OnMapRequest(XEvent e) {
 
 static inline void OnConfigureRequest(XEvent e) {
   logger("Configure request");
+
+  XSetErrorHandler(ErrorHandler);
+
   XWindowChanges changes;
 
   XConfigureRequestEvent event = e.xconfigurerequest;
@@ -260,6 +295,16 @@ static inline void OnConfigureRequest(XEvent e) {
   changes.border_width = event.border_width;
   changes.sibling = event.above;
   changes.stack_mode = event.detail;
+
+  XWindowAttributes attributes;
+  XGetWindowAttributes(display, event.window, &attributes);
+
+  if(error_occurred) {
+    logger("error config");
+  }
+
+  error_occurred = 0; 
+  XSetErrorHandler(NULL);
 
   XConfigureWindow(display, event.window, event.value_mask, &changes);
 }
@@ -332,6 +377,7 @@ void init() {
 
     XGrabKey(display, XKeysymToKeycode(display, kill_win), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
     XGrabKey(display, XKeysymToKeycode(display, die), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(display, XKeysymToKeycode(display, fullscreen), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
 
     XGrabButton(display, AnyButton, Mod4Mask, root, True, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | OwnerGrabButtonMask, 
         GrabModeAsync, GrabModeAsync, None, None);
