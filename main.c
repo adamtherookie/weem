@@ -213,10 +213,12 @@ static inline void FullscreenWindow() {
 }
 
 static inline int ErrorHandler(Display *display, XErrorEvent *event) {
-  if(event->error_code == BadWindow) {
+    char error_message[256];
+    XGetErrorText(display, event->error_code, error_message, sizeof(error_message));
+    err(error_message);
     error_occurred = 1;
-  }
-  return 0;
+
+    return 0;
 }
 
 static inline void OnButtonPress(XEvent e) {
@@ -300,8 +302,6 @@ static inline void OnMapRequest(XEvent e) {
 static inline void OnConfigureRequest(XEvent e) {
   logger("Configure request");
 
-  XSetErrorHandler(ErrorHandler);
-
   XWindowChanges changes;
 
   XConfigureRequestEvent event = e.xconfigurerequest;
@@ -320,9 +320,6 @@ static inline void OnConfigureRequest(XEvent e) {
   } else {
     logger("config error");
   }
-
-  XSetErrorHandler(NULL);
-  error_occurred = 0;
 }
 
 static inline void OnDestroyNotify(XEvent e) {
@@ -353,10 +350,16 @@ void loop() {
   while(true) {
     logger("tick");
 
+    XSetErrorHandler(ErrorHandler);
+
     if (XNextEvent(display, &e) != 0) {
       err("Event stuff");
       break;
     }
+
+    XSetErrorHandler(NULL);
+
+    logger("tock");
 
     switch(e.type) {
       case KeyPress: OnKeyPress(e); break;
