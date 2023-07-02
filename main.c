@@ -30,13 +30,13 @@ static inline void logger(char *msg) {
 }
 
 static inline void err(char *msg) {
-  printf(ANSI_COLOR_RED " -> weem ERROR:" ANSI_COLOR_RESET "%s\n" , msg);
+  printf(ANSI_COLOR_RED " -> weem  ERR:" ANSI_COLOR_RESET " %s\n" , msg);
 }
 
 static inline void kill(Window w) {
   if (w == None) return;
   // Since I have no idea how to handle this, I took (stole) it from:
-  //  https://github.com/dacousb/clarawm/blob/master/clarawm.c
+  // https://github.com/dacousb/clarawm/blob/master/clarawm.c
   XEvent ke;
   ke.type = ClientMessage;
   ke.xclient.window = w;
@@ -180,19 +180,36 @@ static inline void ChangeDesk(int num) {
 }
 
 static inline void FullscreenWindow() {
-  logger("going to fullscreen");
+  logger("toggling fullscreen");
   if(current == NULL) return;
 
-  Window root = DefaultRootWindow(display);
+  if(!current->is_fullscreen) {
+    XWindowAttributes attributes;
+    XGetWindowAttributes(display, current->window, &attributes);
 
-  int screen = DefaultScreen(display);
-  int screenWidth = DisplayWidth(display, screen);
-  int screenHeight = DisplayHeight(display, screen);
+    current->old_x = attributes.x;
+    current->old_y = attributes.y;
+    current->old_w = attributes.width;
+    current->old_h = attributes.height;
 
-  XMoveResizeWindow(display, current->window, -border_width, -border_width, screenWidth + border_width, screenHeight + border_width);
-  XMapWindow(display, current->window);
+    current->is_fullscreen = 1;
 
-  UpdateCurrent();
+    int screen = DefaultScreen(display);
+    int screenWidth = DisplayWidth(display, screen);
+    int screenHeight = DisplayHeight(display, screen);
+
+    XMoveResizeWindow(display, current->window, -border_width, -border_width, screenWidth + border_width, screenHeight + border_width);
+    XMapWindow(display, current->window);
+
+    UpdateCurrent();
+  } else {
+    current->is_fullscreen = 0;
+
+    XMoveResizeWindow(display, current->window, current->old_x, current->old_y, current->old_w, current->old_h);
+    XMapWindow(display, current->window);
+
+    UpdateCurrent();
+  }
 }
 
 static inline int ErrorHandler(Display *display, XErrorEvent *event) {
@@ -255,7 +272,7 @@ static inline void OnKeyPress(XEvent e) {
 
 static inline void OnMotionNotify(XEvent e) {
   logger("Mooootioooon");
-  if (start.subwindow == None) return;
+  if (start.subwindow == None || current->is_fullscreen) return;
 
   int xdiff = e.xbutton.x_root - start.x_root;
   int ydiff = e.xbutton.y_root - start.y_root;
@@ -297,16 +314,15 @@ static inline void OnConfigureRequest(XEvent e) {
   changes.stack_mode = event.detail;
 
   XWindowAttributes attributes;
-  XGetWindowAttributes(display, event.window, &attributes);
 
-  if(error_occurred) {
-    logger("error config");
+  if(XGetWindowAttributes(display, event.window, &attributes)) {
+    XConfigureWindow(display, event.window, event.value_mask, &changes);
+  } else {
+    logger("config error");
   }
 
-  error_occurred = 0; 
   XSetErrorHandler(NULL);
-
-  XConfigureWindow(display, event.window, event.value_mask, &changes);
+  error_occurred = 0;
 }
 
 static inline void OnDestroyNotify(XEvent e) {
@@ -335,7 +351,12 @@ static inline void OnDestroyNotify(XEvent e) {
 void loop() {
   logger("Entered loop\n");
   while(true) {
-    XNextEvent(display, &e);
+    logger("tick");
+
+    if (XNextEvent(display, &e) != 0) {
+      err("Event stuff");
+      break;
+    }
 
     switch(e.type) {
       case KeyPress: OnKeyPress(e); break;
