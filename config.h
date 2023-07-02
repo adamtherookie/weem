@@ -9,6 +9,8 @@
 
 KeySym kill_win = XK_W;
 KeySym fullscreen = XK_F;
+KeySym tile = XK_T;
+KeySym floating = XK_S;
 KeySym die = XK_K;
 
 KeyMap keymap[num_keys] = {
@@ -49,7 +51,9 @@ ChangeDesktop changedesktop[NUM_DESKTOPS] = {
   [9].desktop = 9,
 };
 
-unsigned int border_width    = 3;
+float master_size            = 0.6;
+unsigned int gap_width       = 10;
+unsigned int border_width    = 2;
 unsigned long border_focus   = 0x999f63;
 unsigned long border_unfocus = 0xafafaf;
 

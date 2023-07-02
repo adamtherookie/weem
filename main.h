@@ -36,11 +36,17 @@ typedef struct Client {
   Client *prev;
 
   int is_fullscreen;
+  int is_floating;
+  int is_tiled;
+
+  int prev_state;
 
   int old_x;
   int old_y;
   int old_w;
   int old_h;
+
+  int desktop;
 
   Window window;
 } Client;

@@ -84,6 +84,62 @@ static inline void UpdateCurrent() {
   }
 }
 
+void TileWindows() {
+  unsigned int tiled_windows = 0;
+  unsigned int stack_windows = 0;
+  Client *c;
+
+  for (c = head; c; c = c->next) {
+    if (c->desktop == current_desktop && !c->is_fullscreen && !c->is_floating) {
+      tiled_windows++;
+    }
+  }
+
+  stack_windows = tiled_windows - 1;
+
+  if (tiled_windows == 0) {
+    return;
+  }
+
+  if (tiled_windows == 1) {
+    unsigned int x, y, w, h;
+
+    c = head;
+
+    x = gap_width;
+    y = gap_width;
+    w = width - (2 * gap_width) - (2 * border_width);
+    h = height - (2 * gap_width) - (2 * border_width);
+
+    XMoveResizeWindow(display, c->window, x, y, w, h);
+  } else {
+    unsigned int master_width = (width * master_size) - (gap_width * 2);
+    unsigned int stack_width = (width * (1 - master_size)) - (gap_width * 2);
+
+    unsigned int n = 0;
+    for (c = head; c; c = c->next) {
+      if (c->desktop == current_desktop && !c->is_fullscreen && !c->is_floating) {
+        unsigned int x, y, w, h;
+
+        if (n == 0) {
+          x = gap_width;
+          y = gap_width;
+          w = master_width - (border_width * 2);
+          h = height - (border_width * 2) - (gap_width * 2);
+        } else { 
+          x = width * master_size + (gap_width / 2);
+          w = stack_width - (border_width * 2) + (gap_width / 2);
+          h = (height - (2 * border_width * stack_windows) - gap_width * (stack_windows + 1)) / stack_windows;
+          y = gap_width + ((n - 1) * (h + gap_width + (2 * border_width)));
+        }
+
+        XMoveResizeWindow(display, c->window, x, y, w, h);
+        n++;
+      }
+    }
+  }
+}
+
 static inline void AddWin(Window w) {
   Client *c;
 
@@ -97,6 +153,8 @@ static inline void AddWin(Window w) {
     c->window = w;
     
     head = c;
+    head->desktop = current_desktop;
+    head->is_tiled = 1;
   } else {
     Client *t;
     for(t = head; t->next; t = t->next);
@@ -106,6 +164,9 @@ static inline void AddWin(Window w) {
     c->window = w;
 
     t->next = c;
+
+    t->next->desktop = current_desktop;
+    t->next->is_tiled = 1;
   }
 
   current = c;
@@ -140,6 +201,7 @@ static inline void RemoveWindow(Window w) {
       }
 
       free(c);
+      TileWindows();
       return;
     }
   }
@@ -179,6 +241,28 @@ static inline void ChangeDesk(int num) {
   UpdateCurrent();
 }
 
+static inline void TileWindow() {
+  if(current == NULL) return;
+
+  current->is_fullscreen = 0;
+  current->is_floating = 0;
+  current->is_tiled = 1;
+
+  TileWindows();
+  UpdateCurrent();
+}
+
+static inline void FloatWindow() {
+  if(current == NULL) return;
+
+  current->is_fullscreen = 0;
+  current->is_tiled = 0;
+  current->is_floating = 1;
+
+  TileWindows();
+  UpdateCurrent();
+}
+
 static inline void FullscreenWindow() {
   logger("toggling fullscreen");
   if(current == NULL) return;
@@ -192,7 +276,12 @@ static inline void FullscreenWindow() {
     current->old_w = attributes.width;
     current->old_h = attributes.height;
 
+    if(current->is_tiled) current->prev_state = 1;
+    else current->prev_state = 2;
+
     current->is_fullscreen = 1;
+    current->is_tiled = 0;
+    current->is_floating = 0;
 
     int screen = DefaultScreen(display);
     int screenWidth = DisplayWidth(display, screen);
@@ -204,21 +293,30 @@ static inline void FullscreenWindow() {
     UpdateCurrent();
   } else {
     current->is_fullscreen = 0;
+    
+    if(current->prev_state == 1) {
+      current->is_tiled = 1;
+      current->is_floating = 0;
 
-    XMoveResizeWindow(display, current->window, current->old_x, current->old_y, current->old_w, current->old_h);
-    XMapWindow(display, current->window);
+      TileWindows();
+    } else {
+      current->is_tiled = 0;
+      current->is_floating = 1;
 
+      XMoveResizeWindow(display, current->window, current->old_x, current->old_y, current->old_w, current->old_h);
+      XMapWindow(display, current->window);
+    }
     UpdateCurrent();
   }
 }
 
 static inline int ErrorHandler(Display *display, XErrorEvent *event) {
-    char error_message[256];
-    XGetErrorText(display, event->error_code, error_message, sizeof(error_message));
-    err(error_message);
-    error_occurred = 1;
+  char error_message[256];
+  XGetErrorText(display, event->error_code, error_message, sizeof(error_message));
+  err(error_message);
+  error_occurred = 1;
 
-    return 0;
+  return 0;
 }
 
 static inline void OnButtonPress(XEvent e) {
@@ -258,6 +356,14 @@ static inline void OnKeyPress(XEvent e) {
     FullscreenWindow();
   }
 
+  if (key.keycode == XKeysymToKeycode(display, tile)) {
+    TileWindow();
+  }
+
+  if (key.keycode == XKeysymToKeycode(display, floating)) {
+    FloatWindow();
+  }
+
   for (int i = 0; i < NUM_DESKTOPS; i ++) {
     if (key.keycode == XKeysymToKeycode(display, changedesktop[i].keysym)) {
       logger("Changing desktop");
@@ -274,7 +380,7 @@ static inline void OnKeyPress(XEvent e) {
 
 static inline void OnMotionNotify(XEvent e) {
   logger("Mooootioooon");
-  if (start.subwindow == None || current->is_fullscreen) return;
+  if (start.subwindow == None || current->is_fullscreen || current->is_tiled) return;
 
   int xdiff = e.xbutton.x_root - start.x_root;
   int ydiff = e.xbutton.y_root - start.y_root;
@@ -296,6 +402,7 @@ static inline void OnMapRequest(XEvent e) {
   XMoveWindow(display, e.xmaprequest.window, width/2 - attributes.width/2, height/2 - attributes.height/2);
   XMapWindow(display, e.xmaprequest.window);
 
+  TileWindows();
   UpdateCurrent();
 }
 
@@ -402,6 +509,8 @@ void init() {
     XGrabKey(display, XKeysymToKeycode(display, kill_win), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
     XGrabKey(display, XKeysymToKeycode(display, die), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
     XGrabKey(display, XKeysymToKeycode(display, fullscreen), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(display, XKeysymToKeycode(display, tile), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(display, XKeysymToKeycode(display, floating), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
 
     XGrabButton(display, AnyButton, Mod4Mask, root, True, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | OwnerGrabButtonMask, 
         GrabModeAsync, GrabModeAsync, None, None);
