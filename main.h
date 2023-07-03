@@ -10,6 +10,7 @@
 #include <X11/keysym.h>
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX_WINS 16
 #define NUM_DESKTOPS 10
 #define ANSI_COLOR_RED     "\x1b[31m"

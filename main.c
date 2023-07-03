@@ -380,15 +380,30 @@ static inline void OnKeyPress(XEvent e) {
 
 static inline void OnMotionNotify(XEvent e) {
   logger("Mooootioooon");
-  if (start.subwindow == None || current->is_fullscreen || current->is_tiled) return;
+  if (start.subwindow == None) return;
 
   int xdiff = e.xbutton.x_root - start.x_root;
   int ydiff = e.xbutton.y_root - start.y_root;
-  XMoveResizeWindow(display, start.subwindow,
-      attr.x + (start.button == 1 ? xdiff : 0),
-      attr.y + (start.button == 1 ? ydiff : 0),
-      MAX(1, attr.width + (start.button == 3 ? xdiff : 0)),
-      MAX(1, attr.height + (start.button == 3 ? ydiff : 0)));
+
+  if (start.button == 1 && !current->is_tiled && !current->is_fullscreen) {
+    XMoveWindow(display, start.subwindow,
+      attr.x + xdiff,
+      attr.y + ydiff);
+  } 
+
+  if (start.button == 3 && !current->is_tiled && !current->is_fullscreen) {
+    XMoveResizeWindow(display, start.subwindow,
+      attr.x,
+      attr.y,
+      MAX(1, attr.width + xdiff),
+      MAX(1, attr.height + ydiff));
+  }
+
+  if (start.button == 3 && current->is_tiled) {
+    master_size = (float)(attr.width + xdiff) / width;
+    master_size = MIN(MAX(master_size, 0.2), 0.8);
+    TileWindows();
+  }
 }
 
 static inline void OnMapRequest(XEvent e) {
