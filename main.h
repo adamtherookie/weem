@@ -55,6 +55,8 @@ typedef struct Client {
 typedef struct Desktop {
   Client *head;
   Client *current;
+
+  float master;
 } Desktop;
 
 #endif

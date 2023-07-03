@@ -113,8 +113,8 @@ void TileWindows() {
 
     XMoveResizeWindow(display, c->window, x, y, w, h);
   } else {
-    unsigned int master_width = (width * master_size) - (gap_width * 2);
-    unsigned int stack_width = (width * (1 - master_size)) - (gap_width * 2);
+    unsigned int master_width = (width * desktops[current_desktop].master) - (gap_width * 2);
+    unsigned int stack_width = (width * (1 - desktops[current_desktop].master)) - (gap_width * 2);
 
     unsigned int n = 0;
     for (c = head; c; c = c->next) {
@@ -127,7 +127,7 @@ void TileWindows() {
           w = master_width - (border_width * 2);
           h = height - (border_width * 2) - (gap_width * 2);
         } else { 
-          x = width * master_size + (gap_width / 2);
+          x = width * desktops[current_desktop].master + (gap_width / 2);
           w = stack_width - (border_width * 2) + (gap_width / 2);
           h = (height - (2 * border_width * stack_windows) - gap_width * (stack_windows + 1)) / stack_windows;
           y = gap_width + ((n - 1) * (h + gap_width + (2 * border_width)));
@@ -400,8 +400,8 @@ static inline void OnMotionNotify(XEvent e) {
   }
 
   if (start.button == 3 && current->is_tiled) {
-    master_size = (float)(attr.width + xdiff) / width;
-    master_size = MIN(MAX(master_size, 0.2), 0.8);
+    desktops[current_desktop].master = (float)(attr.width + xdiff) / width;
+    desktops[current_desktop].master = MIN(MAX(desktops[current_desktop].master, 0.2), 0.8);
     TileWindows();
   }
 }
@@ -517,6 +517,7 @@ void init() {
       XGrabKey(display, XKeysymToKeycode(display, changedesktop[i].keysym), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
       desktops[i].head = head;
       desktops[i].current = current;
+      desktops[i].master = master_size;
     }
 
     ChangeDesk(0);
