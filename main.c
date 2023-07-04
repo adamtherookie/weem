@@ -90,7 +90,7 @@ void TileWindows() {
   Client *c;
 
   for (c = head; c; c = c->next) {
-    if (c->desktop == current_desktop && !c->is_fullscreen && !c->is_floating) {
+    if (c->desktop == current_desktop && c->is_tiled) {
       tiled_windows++;
     }
   }
@@ -127,8 +127,8 @@ void TileWindows() {
           w = master_width - (border_width * 2);
           h = height - (border_width * 2) - (gap_width * 2);
         } else { 
-          x = width * desktops[current_desktop].master + (gap_width / 2);
-          w = stack_width - (border_width * 2) + (gap_width / 2);
+          x = width * desktops[current_desktop].master;
+          w = stack_width - (border_width * 2) + (gap_width);
           h = (height - (2 * border_width * stack_windows) - gap_width * (stack_windows + 1)) / stack_windows;
           y = gap_width + ((n - 1) * (h + gap_width + (2 * border_width)));
         }
@@ -377,7 +377,6 @@ static inline void OnKeyPress(XEvent e) {
     exit(EXIT_SUCCESS);
   }
 }
-
 static inline void OnMotionNotify(XEvent e) {
   logger("Mooootioooon");
   if (start.subwindow == None) return;
@@ -386,10 +385,28 @@ static inline void OnMotionNotify(XEvent e) {
   int ydiff = e.xbutton.y_root - start.y_root;
 
   if (start.button == 1 && !current->is_tiled && !current->is_fullscreen) {
-    XMoveWindow(display, start.subwindow,
-      attr.x + xdiff,
-      attr.y + ydiff);
-  } 
+    int new_x = attr.x + xdiff;
+    int new_y = attr.y + ydiff;
+    int max_x = width - attr.width - (2 * border_width);
+    int max_y = height - attr.height - (2 * border_width);
+
+    if (new_x < snap_threshold) {
+      new_x = 0;
+    }
+    else if (new_x > max_x - snap_threshold) {
+      new_x = max_x;
+    }
+
+    if (new_y < snap_threshold) {
+      new_y = 0;
+    }
+
+    else if (new_y > max_y - snap_threshold) {
+      new_y = max_y;
+    }
+
+    XMoveWindow(display, start.subwindow, new_x, new_y);
+  }
 
   if (start.button == 3 && !current->is_tiled && !current->is_fullscreen) {
     XMoveResizeWindow(display, start.subwindow,
@@ -404,6 +421,8 @@ static inline void OnMotionNotify(XEvent e) {
     desktops[current_desktop].master = MIN(MAX(desktops[current_desktop].master, 0.2), 0.8);
     TileWindows();
   }
+
+  XFlush(display);
 }
 
 static inline void OnMapRequest(XEvent e) {

@@ -52,6 +52,7 @@ ChangeDesktop changedesktop[NUM_DESKTOPS] = {
 };
 
 float master_size            = 0.6;
+unsigned int snap_threshold  = 10;
 unsigned int gap_width       = 10;
 unsigned int border_width    = 2;
 unsigned long border_focus   = 0x999f63;
