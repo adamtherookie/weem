@@ -8,6 +8,7 @@
 
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
+#include <X11/cursorfont.h>
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))

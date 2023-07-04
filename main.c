@@ -551,6 +551,12 @@ void init() {
         GrabModeAsync, GrabModeAsync, None, None);
 
     XSelectInput(display, root, SubstructureNotifyMask | SubstructureRedirectMask);
+
+    XSetWindowAttributes attributes;
+    attributes.event_mask = ButtonPress | KeyPress | SubstructureRedirectMask | SubstructureNotifyMask | PropertyChangeMask;
+    attributes.cursor = XCreateFontCursor(display, XC_left_ptr);
+    XChangeWindowAttributes(display, root, CWEventMask | CWCursor, &attributes);
+    
     //system("~/.config/weem/weemrc");
   }
 }
