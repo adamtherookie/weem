@@ -6,6 +6,8 @@
 #include "main.h"
 
 #define num_keys 4
+#define true 1
+#define false 0
 
 KeySym kill_win = XK_W;
 KeySym fullscreen = XK_F;
@@ -51,8 +53,10 @@ ChangeDesktop changedesktop[NUM_DESKTOPS] = {
   [9].desktop = 9,
 };
 
-float master_size            = 0.6;
+unsigned int snap = false;
 unsigned int snap_threshold  = 10;
+
+float master_size            = 0.6;
 unsigned int gap_width       = 10;
 unsigned int border_width    = 2;
 unsigned long border_focus   = 0x999f63;

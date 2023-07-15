@@ -73,7 +73,6 @@ static inline void UpdateCurrent() {
 
   for (c = head; c; c = c->next) {
     if (current == c) {
-      logger("Raising window");
       XSetWindowBorderWidth(display, c->window, border_width);
       XSetWindowBorder(display, c->window, border_focus);
       XSetInputFocus(display, c->window, RevertToParent, CurrentTime);
@@ -178,23 +177,19 @@ static inline void RemoveWindow(Window w) {
   for(c = head; c; c = c->next) {
     if (c->window == w) {
       if (c->prev == NULL && c->next == NULL) {
-        logger("prev null and next null");
         free(head);
         head = NULL;
         current = NULL;
         return;
       }
       if (c->prev == NULL) {
-        logger("prev null");
         head = c->next;
         c->next->prev = NULL;
         current = c->next;
       } else if(c->next == NULL) {
-        logger("next null");
         c->prev->next = NULL;
         current = c->prev;
       } else {
-        logger("none null");
         c->prev->next = c->next;
         c->next->prev = c->prev;
         current = c->prev;
@@ -211,12 +206,10 @@ static inline void ChangeDesk(int num) {
   Client *c;
 
   if (num == current_desktop) {
-    logger("nvm we're already here");
     return;
   }
 
   // Unmap windows
-  logger("unmapping windows");
   if (head != NULL) {
     for (c = head; c; c = c->next) {
       XUnmapWindow(display, c->window);
@@ -230,7 +223,6 @@ static inline void ChangeDesk(int num) {
   current = desktops[num].current;
   current_desktop = num;
   
-  logger("mapping new windows");
   // Map windows
   if (head != NULL) {
     for (c = head; c; c = c->next) {
@@ -264,7 +256,6 @@ static inline void FloatWindow() {
 }
 
 static inline void FullscreenWindow() {
-  logger("toggling fullscreen");
   if(current == NULL) return;
 
   if(!current->is_fullscreen) {
@@ -320,7 +311,6 @@ static inline int ErrorHandler(Display *display, XErrorEvent *event) {
 }
 
 static inline void OnButtonPress(XEvent e) {
-  logger("button press");
   if (e.xbutton.subwindow == None) return;
   start = e.xbutton;
   
@@ -338,7 +328,6 @@ static inline void OnButtonPress(XEvent e) {
 }
 
 static inline void OnKeyPress(XEvent e) {
-  logger("keeey preess");
   key = e.xkey;
 
   for (int i = 0; i < num_keys; i ++) {
@@ -366,19 +355,16 @@ static inline void OnKeyPress(XEvent e) {
 
   for (int i = 0; i < NUM_DESKTOPS; i ++) {
     if (key.keycode == XKeysymToKeycode(display, changedesktop[i].keysym)) {
-      logger("Changing desktop");
       ChangeDesk(changedesktop[i].desktop);
     }
   }
   
   if (key.keycode == XKeysymToKeycode(display, die)) {
-    logger("kill");
     XCloseDisplay(display);
     exit(EXIT_SUCCESS);
   }
 }
 static inline void OnMotionNotify(XEvent e) {
-  logger("Mooootioooon");
   if (start.subwindow == None) return;
 
   int xdiff = e.xbutton.x_root - start.x_root;
@@ -390,19 +376,21 @@ static inline void OnMotionNotify(XEvent e) {
     int max_x = width - attr.width - (2 * border_width);
     int max_y = height - attr.height - (2 * border_width);
 
-    if (new_x < snap_threshold) {
-      new_x = 0;
-    }
-    else if (new_x > max_x - snap_threshold) {
-      new_x = max_x;
-    }
+    if (snap) {
+      if (new_x < snap_threshold) {
+        new_x = 0;
+      }
+      else if (new_x > max_x - snap_threshold) {
+        new_x = max_x;
+      }
 
-    if (new_y < snap_threshold) {
-      new_y = 0;
-    }
+      if (new_y < snap_threshold) {
+        new_y = 0;
+      }
 
-    else if (new_y > max_y - snap_threshold) {
-      new_y = max_y;
+      else if (new_y > max_y - snap_threshold) {
+        new_y = max_y;
+      }
     }
 
     XMoveWindow(display, start.subwindow, new_x, new_y);
@@ -426,7 +414,6 @@ static inline void OnMotionNotify(XEvent e) {
 }
 
 static inline void OnMapRequest(XEvent e) {
-  logger("Map request");
   static XWindowAttributes attributes;
 
   if (!XGetWindowAttributes(display, e.xmaprequest.window, &attributes) || attributes.override_redirect) 
@@ -441,8 +428,6 @@ static inline void OnMapRequest(XEvent e) {
 }
 
 static inline void OnConfigureRequest(XEvent e) {
-  logger("Configure request");
-
   XWindowChanges changes;
 
   XConfigureRequestEvent event = e.xconfigurerequest;
@@ -459,12 +444,11 @@ static inline void OnConfigureRequest(XEvent e) {
   if(XGetWindowAttributes(display, event.window, &attributes)) {
     XConfigureWindow(display, event.window, event.value_mask, &changes);
   } else {
-    logger("config error");
+    err("configuration error");
   }
 }
 
 static inline void OnDestroyNotify(XEvent e) {
-  logger("Destroy notify");
   Client *c;
 
   int i = 0;
@@ -475,32 +459,24 @@ static inline void OnDestroyNotify(XEvent e) {
   }
 
   if (i == 0) {
-    logger("Nothing here");
     return;
   } 
 
-  logger("time to remove window");
   RemoveWindow(e.xdestroywindow.window);
-  logger("time to update");
   UpdateCurrent();
-  logger("Removed window");
 }
 
 void loop() {
-  logger("Entered loop\n");
   while(true) {
-    logger("tick");
-
     XSetErrorHandler(ErrorHandler);
 
     if (XNextEvent(display, &e) != 0) {
-      err("Event stuff");
+      err("event error");
       break;
     }
 
     XSetErrorHandler(NULL);
 
-    logger("tock");
 
     switch(e.type) {
       case KeyPress: OnKeyPress(e); break;
@@ -518,7 +494,7 @@ void init() {
   display = XOpenDisplay(NULL);
 
   if (display == NULL) {
-    err("Failed to open display");
+    err("failed to open display");
   } else {
     root = DefaultRootWindow(display);
     screen = DefaultScreenOfDisplay(display);
@@ -548,6 +524,8 @@ void init() {
     XGrabKey(display, XKeysymToKeycode(display, floating), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
 
     XGrabButton(display, AnyButton, Mod4Mask, root, True, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | OwnerGrabButtonMask, 
+        GrabModeAsync, GrabModeAsync, None, None);
+    XGrabButton(display, AnyButton, 0, root, True, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | OwnerGrabButtonMask, 
         GrabModeAsync, GrabModeAsync, None, None);
 
     XSelectInput(display, root, SubstructureNotifyMask | SubstructureRedirectMask);
