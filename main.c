@@ -525,8 +525,7 @@ void init() {
 
     XGrabButton(display, AnyButton, Mod4Mask, root, True, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | OwnerGrabButtonMask, 
         GrabModeAsync, GrabModeAsync, None, None);
-    XGrabButton(display, AnyButton, 0, root, True, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | OwnerGrabButtonMask, 
-        GrabModeAsync, GrabModeAsync, None, None);
+    XGrabButton(display, Button1, 0, root, True, ButtonPressMask | ButtonReleaseMask, GrabModeAsync, GrabModeAsync, None, None);
 
     XSelectInput(display, root, SubstructureNotifyMask | SubstructureRedirectMask);
 
