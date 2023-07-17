@@ -202,6 +202,32 @@ static inline void RemoveWindow(Window w) {
   }
 }
 
+static inline void SendDesk(int num) {
+  if (num == current_desktop) return;
+  
+  Client *target = current;
+  XUnmapWindow(display, current->window);
+  
+  current = current->next;
+  if (target->prev) {
+    target->prev->next = target->next;
+  } else {
+    head = target->next;
+  }
+
+  if (target->next) {
+    target->next->prev = target->prev;
+  }
+
+  target->prev = NULL;
+  target->next = desktops[num].head;
+  target->desktop = num;
+  desktops[num].head = target;
+
+  UpdateCurrent();
+  TileWindows();
+}
+
 static inline void ChangeDesk(int num) {
   Client *c;
 
@@ -231,6 +257,7 @@ static inline void ChangeDesk(int num) {
   }
 
   UpdateCurrent();
+  TileWindows();
 }
 
 static inline void TileWindow() {
@@ -355,7 +382,11 @@ static inline void OnKeyPress(XEvent e) {
 
   for (int i = 0; i < NUM_DESKTOPS; i ++) {
     if (key.keycode == XKeysymToKeycode(display, changedesktop[i].keysym)) {
-      ChangeDesk(changedesktop[i].desktop);
+      if (key.state & ShiftMask) {
+        SendDesk(changedesktop[i].desktop);
+      } else {
+        ChangeDesk(changedesktop[i].desktop);
+      }
     }
   }
   
@@ -510,6 +541,7 @@ void init() {
 
     for (int i = 0; i < NUM_DESKTOPS; i ++) {
       XGrabKey(display, XKeysymToKeycode(display, changedesktop[i].keysym), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
+      XGrabKey(display, XKeysymToKeycode(display, changedesktop[i].keysym), Mod4Mask | ShiftMask, root, True, GrabModeAsync, GrabModeAsync);
       desktops[i].head = head;
       desktops[i].current = current;
       desktops[i].master = master_size;
