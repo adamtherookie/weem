@@ -5,7 +5,6 @@
 #include <X11/keysym.h>
 #include "main.h"
 
-#define num_keys 4
 #define true 1
 #define false 0
 
@@ -14,6 +13,8 @@ KeySym fullscreen = XK_F;
 KeySym tile = XK_T;
 KeySym floating = XK_S;
 KeySym die = XK_K;
+
+#define num_keys 4
 
 KeyMap keymap[num_keys] = {
   // Terminal

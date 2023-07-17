@@ -204,7 +204,7 @@ static inline void RemoveWindow(Window w) {
 
 static inline void SendDesk(int num) {
   if (num == current_desktop) return;
-  
+
   Client *target = current;
   XUnmapWindow(display, current->window);
   
@@ -566,7 +566,7 @@ void init() {
     attributes.cursor = XCreateFontCursor(display, XC_left_ptr);
     XChangeWindowAttributes(display, root, CWEventMask | CWCursor, &attributes);
     
-    //system("~/.config/weem/weemrc");
+    system("~/.config/weem/autostart.sh");
   }
 }
 
