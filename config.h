@@ -8,11 +8,18 @@
 #define true 1
 #define false 0
 
+#define MOD Mod4Mask
+
 KeySym kill_win = XK_W;
 KeySym fullscreen = XK_F;
 KeySym tile = XK_T;
 KeySym floating = XK_S;
 KeySym die = XK_K;
+
+KeySym up = XK_Up;
+KeySym down = XK_Down;
+KeySym left = XK_Left;
+KeySym right = XK_Right;
 
 #define num_keys 4
 

@@ -203,12 +203,14 @@ static inline void RemoveWindow(Window w) {
 }
 
 static inline void SendDesk(int num) {
-  if (num == current_desktop) return;
+  if (num == current_desktop || current == None) return;
 
   Client *target = current;
   XUnmapWindow(display, current->window);
   
-  current = current->next;
+  if (current->prev) current = current->prev;
+  else current = current->next;
+
   if (target->prev) {
     target->prev->next = target->next;
   } else {
@@ -218,11 +220,24 @@ static inline void SendDesk(int num) {
   if (target->next) {
     target->next->prev = target->prev;
   }
+  
+  if (desktops[num].head) {
+    Client *t;
 
-  target->prev = NULL;
-  target->next = desktops[num].head;
+    for (t = desktops[num].head; t->next; t = t->next);
+
+    t->next = target;
+
+    target->next = NULL;
+    target->prev = t;
+  } else {
+    desktops[num].head = target;
+    target->next = NULL;
+    target->prev = NULL;
+  }
+
   target->desktop = num;
-  desktops[num].head = target;
+  if (!desktops[num].current) desktops[num].current = target;
 
   UpdateCurrent();
   TileWindows();
@@ -389,12 +404,13 @@ static inline void OnKeyPress(XEvent e) {
       }
     }
   }
-  
+
   if (key.keycode == XKeysymToKeycode(display, die)) {
     XCloseDisplay(display);
     exit(EXIT_SUCCESS);
   }
 }
+
 static inline void OnMotionNotify(XEvent e) {
   if (start.subwindow == None) return;
 
@@ -536,12 +552,12 @@ void init() {
 
     // Grab
     for (int i = 0; i < num_keys; i ++) {
-      XGrabKey(display, XKeysymToKeycode(display, keymap[i].keysym), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
+      XGrabKey(display, XKeysymToKeycode(display, keymap[i].keysym), MOD, root, True, GrabModeAsync, GrabModeAsync);
     }
 
     for (int i = 0; i < NUM_DESKTOPS; i ++) {
-      XGrabKey(display, XKeysymToKeycode(display, changedesktop[i].keysym), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
-      XGrabKey(display, XKeysymToKeycode(display, changedesktop[i].keysym), Mod4Mask | ShiftMask, root, True, GrabModeAsync, GrabModeAsync);
+      XGrabKey(display, XKeysymToKeycode(display, changedesktop[i].keysym), MOD, root, True, GrabModeAsync, GrabModeAsync);
+      XGrabKey(display, XKeysymToKeycode(display, changedesktop[i].keysym), MOD | ShiftMask, root, True, GrabModeAsync, GrabModeAsync);
       desktops[i].head = head;
       desktops[i].current = current;
       desktops[i].master = master_size;
@@ -549,14 +565,19 @@ void init() {
 
     ChangeDesk(0);
 
-    XGrabKey(display, XKeysymToKeycode(display, kill_win), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(display, XKeysymToKeycode(display, die), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(display, XKeysymToKeycode(display, fullscreen), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(display, XKeysymToKeycode(display, tile), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(display, XKeysymToKeycode(display, floating), Mod4Mask, root, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(display, XKeysymToKeycode(display, kill_win), MOD, root, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(display, XKeysymToKeycode(display, die), MOD, root, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(display, XKeysymToKeycode(display, fullscreen), MOD, root, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(display, XKeysymToKeycode(display, tile), MOD, root, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(display, XKeysymToKeycode(display, floating), MOD, root, True, GrabModeAsync, GrabModeAsync);
 
-    XGrabButton(display, AnyButton, Mod4Mask, root, True, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | OwnerGrabButtonMask, 
-        GrabModeAsync, GrabModeAsync, None, None);
+    XGrabKey(display, XKeysymToKeycode(display, up), MOD, root, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(display, XKeysymToKeycode(display, down), MOD, root, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(display, XKeysymToKeycode(display, left), MOD, root, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(display, XKeysymToKeycode(display, right), MOD, root, True, GrabModeAsync, GrabModeAsync);
+
+
+    XGrabButton(display, AnyButton, MOD, root, True, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | OwnerGrabButtonMask, GrabModeAsync, GrabModeAsync, None, None);
     XGrabButton(display, Button1, 0, root, True, ButtonPressMask | ButtonReleaseMask, GrabModeAsync, GrabModeAsync, None, None);
 
     XSelectInput(display, root, SubstructureNotifyMask | SubstructureRedirectMask);
@@ -566,7 +587,7 @@ void init() {
     attributes.cursor = XCreateFontCursor(display, XC_left_ptr);
     XChangeWindowAttributes(display, root, CWEventMask | CWCursor, &attributes);
     
-    system("~/.config/weem/autostart.sh");
+    // system("~/.config/weem/autostart.sh");
   }
 }
 
