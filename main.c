@@ -33,6 +33,18 @@ static inline void err(char *msg) {
   printf(ANSI_COLOR_RED " -> weem  ERR:" ANSI_COLOR_RESET " %s\n" , msg);
 }
 
+static inline int is_polybar(Display *display, Window window) {
+  XClassHint class_hint;
+  if (XGetClassHint(display, window, &class_hint)) {
+    int is_polybar = strcmp(class_hint.res_name, "polybar") == 0 ||
+                      strcmp(class_hint.res_class, "Polybar") == 0;
+    XFree(class_hint.res_name);
+    XFree(class_hint.res_class);
+    return is_polybar;
+  }
+  return false;
+}
+
 static inline void kill(Window w) {
   if (w == None) return;
   // Since I have no idea how to handle this, I took (stole) it from:
@@ -95,6 +107,7 @@ void TileWindows() {
   }
 
   stack_windows = tiled_windows - 1;
+  unsigned int win_height = height - top_margin;
 
   if (tiled_windows == 0) {
     return;
@@ -106,9 +119,9 @@ void TileWindows() {
     c = head;
 
     x = gap_width;
-    y = gap_width;
+    y = top_margin + gap_width;
     w = width - (2 * gap_width) - (2 * border_width);
-    h = height - (2 * gap_width) - (2 * border_width);
+    h = win_height - (2 * gap_width) - (2 * border_width);
 
     XMoveResizeWindow(display, c->window, x, y, w, h);
   } else {
@@ -122,14 +135,14 @@ void TileWindows() {
 
         if (n == 0) {
           x = gap_width;
-          y = gap_width;
+          y = top_margin + gap_width;
           w = master_width - (border_width * 2);
-          h = height - (border_width * 2) - (gap_width * 2);
+          h = win_height - (border_width * 2) - (gap_width * 2);
         } else { 
           x = width * desktops[current_desktop].master;
           w = stack_width - (border_width * 2) + (gap_width);
-          h = (height - (2 * border_width * stack_windows) - gap_width * (stack_windows + 1)) / stack_windows;
-          y = gap_width + ((n - 1) * (h + gap_width + (2 * border_width)));
+          h = (win_height - (2 * border_width * stack_windows) - gap_width * (stack_windows + 1)) / stack_windows;
+          y = top_margin + gap_width + ((n - 1) * (h + gap_width + (2 * border_width)));
         }
 
         XMoveResizeWindow(display, c->window, x, y, w, h);
@@ -539,17 +552,25 @@ static inline void OnMotionNotify(XEvent e) {
 }
 
 static inline void OnMapRequest(XEvent e) {
-  static XWindowAttributes attributes;
+  if (is_polybar(display, e.xmaprequest.window)) {
+    XWindowAttributes attributes;
+    XGetWindowAttributes(display, e.xmaprequest.window, &attributes);
 
-  if (!XGetWindowAttributes(display, e.xmaprequest.window, &attributes) || attributes.override_redirect) 
-    return;
-  
-  AddWin(e.xmaprequest.window);
-  XMoveWindow(display, e.xmaprequest.window, width/2 - attributes.width/2, height/2 - attributes.height/2);
-  XMapWindow(display, e.xmaprequest.window);
+    XMapWindow(display, e.xmaprequest.window);
+    XMoveResizeWindow(display, e.xmaprequest.window, 0, 0, width, attributes.height);
+  } else {
+    static XWindowAttributes attributes;
 
-  TileWindows();
-  UpdateCurrent();
+    if (!XGetWindowAttributes(display, e.xmaprequest.window, &attributes) || attributes.override_redirect) 
+      return;
+    
+    AddWin(e.xmaprequest.window);
+    XMoveWindow(display, e.xmaprequest.window, width/2 - attributes.width/2, height/2 - attributes.height/2);
+    XMapWindow(display, e.xmaprequest.window);
+
+    TileWindows();
+    UpdateCurrent();
+  }
 }
 
 static inline void OnConfigureRequest(XEvent e) {
@@ -628,6 +649,8 @@ void init() {
     height = XDisplayHeight(display, scr_num);
     width = XDisplayWidth(display, scr_num);
 
+    create_pipe();
+
     // Grab
     for (int i = 0; i < num_keys; i ++) {
       XGrabKey(display, XKeysymToKeycode(display, keymap[i].keysym), MOD, root, True, GrabModeAsync, GrabModeAsync);
@@ -654,9 +677,7 @@ void init() {
     XGrabKey(display, XKeysymToKeycode(display, left), MOD, root, True, GrabModeAsync, GrabModeAsync);
     XGrabKey(display, XKeysymToKeycode(display, right), MOD, root, True, GrabModeAsync, GrabModeAsync);
 
-
     XGrabButton(display, AnyButton, MOD, root, True, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | OwnerGrabButtonMask, GrabModeAsync, GrabModeAsync, None, None);
-    XGrabButton(display, Button1, 0, root, True, ButtonPressMask | ButtonReleaseMask, GrabModeAsync, GrabModeAsync, None, None);
 
     XSelectInput(display, root, SubstructureNotifyMask | SubstructureRedirectMask);
 

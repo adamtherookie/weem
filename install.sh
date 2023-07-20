@@ -5,6 +5,9 @@ mkdir -p ~/.config/weem
 echo " -> Creating autostart script"
 touch ~/.config/weem/autostart.sh
 
+echo " -> Creating pipe (for polybar)"
+mkfifo ~/.weempipe
+
 echo " -> Compiling source code"
 sh build.sh
 echo " -> Installing"

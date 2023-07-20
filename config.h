@@ -64,6 +64,8 @@ ChangeDesktop changedesktop[NUM_DESKTOPS] = {
 unsigned int snap = false;
 unsigned int snap_threshold  = 10;
 
+unsigned int top_margin      = 40;
+
 float master_size            = 0.6;
 float master_tick            = 0.05;
 
