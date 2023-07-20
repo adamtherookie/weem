@@ -343,6 +343,68 @@ static inline void FullscreenWindow() {
   }
 }
 
+static inline void MoveUp() {
+  if (!current || !current->prev) return;
+
+  Client *new_next = current->prev;
+
+  if (current->next) {
+    current->next->prev = current->prev;
+  }
+
+  current->prev->next = current->next;
+  current->prev = current->prev->prev;
+
+  if (current->prev) {
+    current->prev->next = current;
+  } else {
+    head = current;
+  }
+
+  current->next = new_next;
+  current->next->prev = current;
+
+  UpdateCurrent();
+  TileWindows();
+}
+
+static inline void MoveDown() {
+  if (!current || !current->next) return;
+
+  Client *new_prev = current->next;
+
+  if (current->prev) {
+    current->prev->next = current->next;
+  } else {
+    head = current->next;
+  }
+
+  current->next->prev = current->prev;
+  current->next = current->next->next;
+
+  if (current->next) {
+    current->next->prev = current;
+  }
+
+  current->prev = new_prev;
+  current->prev->next = current;
+
+  UpdateCurrent();
+  TileWindows();
+}
+
+static inline void IncMaster() {
+  desktops[current_desktop].master += master_tick;
+  desktops[current_desktop].master = MIN(MAX(desktops[current_desktop].master, 0.2), 0.8);
+  TileWindows();
+}
+
+static inline void DecMaster() {
+  desktops[current_desktop].master -= master_tick;
+  desktops[current_desktop].master = MIN(MAX(desktops[current_desktop].master, 0.2), 0.8);
+  TileWindows();
+}
+
 static inline int ErrorHandler(Display *display, XErrorEvent *event) {
   char error_message[256];
   XGetErrorText(display, event->error_code, error_message, sizeof(error_message));
@@ -393,6 +455,22 @@ static inline void OnKeyPress(XEvent e) {
 
   if (key.keycode == XKeysymToKeycode(display, floating)) {
     FloatWindow();
+  }
+
+  if (key.keycode == XKeysymToKeycode(display, up)) {
+    MoveUp();
+  }
+
+  if (key.keycode == XKeysymToKeycode(display, down)) {
+    MoveDown();
+  }
+
+  if (key.keycode == XKeysymToKeycode(display, right)) {
+    IncMaster();
+  }
+
+  if (key.keycode == XKeysymToKeycode(display, left)) {
+    DecMaster();
   }
 
   for (int i = 0; i < NUM_DESKTOPS; i ++) {

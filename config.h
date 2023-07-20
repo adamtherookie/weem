@@ -65,6 +65,8 @@ unsigned int snap = false;
 unsigned int snap_threshold  = 10;
 
 float master_size            = 0.6;
+float master_tick            = 0.05;
+
 unsigned int gap_width       = 10;
 unsigned int border_width    = 2;
 unsigned long border_focus   = 0x999f63;
