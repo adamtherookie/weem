@@ -8,18 +8,22 @@
 #define true 1
 #define false 0
 
+#define top 1
+#define bottom 0
+
 #define MOD Mod4Mask
+#define SHIFT ShiftMask
 
-KeySym kill_win = XK_W;
-KeySym fullscreen = XK_F;
-KeySym tile = XK_T;
-KeySym floating = XK_S;
-KeySym die = XK_K;
+KeyMod kill_win   = { XK_W, MOD };
+KeyMod fullscreen = { XK_F, MOD };
+KeyMod tile       = { XK_T, MOD };
+KeyMod floating   = { XK_S, MOD };
+KeyMod die        = { XK_K, MOD };
 
-KeySym up = XK_Up;
-KeySym down = XK_Down;
-KeySym left = XK_Left;
-KeySym right = XK_Right;
+KeyMod up         = { XK_Up, MOD };
+KeyMod down       = { XK_Down, MOD };
+KeyMod left       = { XK_Left, MOD };
+KeyMod right      = { XK_Right, MOD };
 
 #define num_keys 4
 
@@ -64,7 +68,8 @@ ChangeDesktop changedesktop[NUM_DESKTOPS] = {
 unsigned int snap = false;
 unsigned int snap_threshold  = 10;
 
-unsigned int top_margin      = 40;
+unsigned int bar_position    = bottom;
+unsigned int bar_margin      = 40;
 
 float master_size            = 0.6;
 float master_tick            = 0.05;

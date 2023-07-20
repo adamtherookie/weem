@@ -107,7 +107,7 @@ void TileWindows() {
   }
 
   stack_windows = tiled_windows - 1;
-  unsigned int win_height = height - top_margin;
+  unsigned int win_height = height - bar_margin;
 
   if (tiled_windows == 0) {
     return;
@@ -119,7 +119,7 @@ void TileWindows() {
     c = head;
 
     x = gap_width;
-    y = top_margin + gap_width;
+    y = (bar_position == top) ? (bar_margin + gap_width) : (gap_width);
     w = width - (2 * gap_width) - (2 * border_width);
     h = win_height - (2 * gap_width) - (2 * border_width);
 
@@ -135,14 +135,14 @@ void TileWindows() {
 
         if (n == 0) {
           x = gap_width;
-          y = top_margin + gap_width;
+          y = (bar_position == top) ? (bar_margin + gap_width) : (gap_width);
           w = master_width - (border_width * 2);
           h = win_height - (border_width * 2) - (gap_width * 2);
         } else { 
           x = width * desktops[current_desktop].master;
           w = stack_width - (border_width * 2) + (gap_width);
           h = (win_height - (2 * border_width * stack_windows) - gap_width * (stack_windows + 1)) / stack_windows;
-          y = top_margin + gap_width + ((n - 1) * (h + gap_width + (2 * border_width)));
+          y = ((bar_position == top) ? (bar_margin + gap_width) : (gap_width)) + ((n - 1) * (h + gap_width + (2 * border_width)));
         }
 
         XMoveResizeWindow(display, c->window, x, y, w, h);
@@ -454,35 +454,35 @@ static inline void OnKeyPress(XEvent e) {
     }
   }
 
-  if (key.keycode == XKeysymToKeycode(display, kill_win)) {
+  if (key.keycode == XKeysymToKeycode(display, kill_win.keysym)) {
     KillClient();
   }
 
-  if (key.keycode == XKeysymToKeycode(display, fullscreen)) {
+  if (key.keycode == XKeysymToKeycode(display, fullscreen.keysym)) {
     FullscreenWindow();
   }
 
-  if (key.keycode == XKeysymToKeycode(display, tile)) {
+  if (key.keycode == XKeysymToKeycode(display, tile.keysym)) {
     TileWindow();
   }
 
-  if (key.keycode == XKeysymToKeycode(display, floating)) {
+  if (key.keycode == XKeysymToKeycode(display, floating.keysym)) {
     FloatWindow();
   }
 
-  if (key.keycode == XKeysymToKeycode(display, up)) {
+  if (key.keycode == XKeysymToKeycode(display, up.keysym)) {
     MoveUp();
   }
 
-  if (key.keycode == XKeysymToKeycode(display, down)) {
+  if (key.keycode == XKeysymToKeycode(display, down.keysym)) {
     MoveDown();
   }
 
-  if (key.keycode == XKeysymToKeycode(display, right)) {
+  if (key.keycode == XKeysymToKeycode(display, right.keysym)) {
     IncMaster();
   }
 
-  if (key.keycode == XKeysymToKeycode(display, left)) {
+  if (key.keycode == XKeysymToKeycode(display, left.keysym)) {
     DecMaster();
   }
 
@@ -496,7 +496,7 @@ static inline void OnKeyPress(XEvent e) {
     }
   }
 
-  if (key.keycode == XKeysymToKeycode(display, die)) {
+  if (key.keycode == XKeysymToKeycode(display, die.keysym)) {
     XCloseDisplay(display);
     exit(EXIT_SUCCESS);
   }
@@ -649,8 +649,6 @@ void init() {
     height = XDisplayHeight(display, scr_num);
     width = XDisplayWidth(display, scr_num);
 
-    create_pipe();
-
     // Grab
     for (int i = 0; i < num_keys; i ++) {
       XGrabKey(display, XKeysymToKeycode(display, keymap[i].keysym), MOD, root, True, GrabModeAsync, GrabModeAsync);
@@ -666,16 +664,16 @@ void init() {
 
     ChangeDesk(0);
 
-    XGrabKey(display, XKeysymToKeycode(display, kill_win), MOD, root, True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(display, XKeysymToKeycode(display, die), MOD, root, True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(display, XKeysymToKeycode(display, fullscreen), MOD, root, True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(display, XKeysymToKeycode(display, tile), MOD, root, True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(display, XKeysymToKeycode(display, floating), MOD, root, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(display, XKeysymToKeycode(display, kill_win.keysym), kill_win.mod, root, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(display, XKeysymToKeycode(display, die.keysym), die.mod, root, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(display, XKeysymToKeycode(display, fullscreen.keysym), fullscreen.mod, root, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(display, XKeysymToKeycode(display, tile.keysym), tile.mod, root, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(display, XKeysymToKeycode(display, floating.keysym), floating.mod, root, True, GrabModeAsync, GrabModeAsync);
 
-    XGrabKey(display, XKeysymToKeycode(display, up), MOD, root, True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(display, XKeysymToKeycode(display, down), MOD, root, True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(display, XKeysymToKeycode(display, left), MOD, root, True, GrabModeAsync, GrabModeAsync);
-    XGrabKey(display, XKeysymToKeycode(display, right), MOD, root, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(display, XKeysymToKeycode(display, up.keysym), up.mod, root, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(display, XKeysymToKeycode(display, down.keysym), down.mod, root, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(display, XKeysymToKeycode(display, left.keysym), left.mod, root, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(display, XKeysymToKeycode(display, right.keysym), right.mod, root, True, GrabModeAsync, GrabModeAsync);
 
     XGrabButton(display, AnyButton, MOD, root, True, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | OwnerGrabButtonMask, GrabModeAsync, GrabModeAsync, None, None);
 

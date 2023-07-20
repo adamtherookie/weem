@@ -29,6 +29,11 @@ typedef struct KeyMap {
   char *cmd[10];
 } KeyMap;
 
+typedef struct KeyMod {
+  KeySym keysym;
+  unsigned int mod;
+} KeyMod;
+
 typedef struct ChangeDesktop {
   KeySym keysym;
   int desktop;
