@@ -65,19 +65,39 @@ ChangeDesktop changedesktop[NUM_DESKTOPS] = {
   [9].desktop = 9,
 };
 
-unsigned int snap = false;
-unsigned int snap_threshold  = 10;
+unsigned int snap             = false;
+unsigned int snap_threshold   = 10;
 
-unsigned int bar_position    = bottom;
-unsigned int bar_margin      = 40;
+float master_size             = 0.6;
+float master_tick             = 0.05;
 
-float master_size            = 0.6;
-float master_tick            = 0.05;
+unsigned int gap_width        = 10;
+unsigned int border_width     = 2;
+unsigned long border_focus    = 0x999f63;
+unsigned long border_unfocus  = 0xafafaf;
 
-unsigned int gap_width       = 10;
-unsigned int border_width    = 2;
-unsigned long border_focus   = 0x999f63;
-unsigned long border_unfocus = 0xafafaf;
+// weembar
+unsigned int show_bar         = true;
+
+const char *desktop_icons[NUM_DESKTOPS] = { "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X" };
+unsigned int icons_offset     = 0;
+unsigned int icons_size       = 7;
+unsigned int icons_padding    = 10;
+unsigned int desktop_focus    = 0x999f63;
+unsigned int desktop_unfocus  = 0x393939;
+unsigned int text_focus       = 0x393939;
+unsigned int text_unfocus     = 0xafafaf;
+
+unsigned int bar_position     = bottom;
+unsigned int bar_size         = 30;
+unsigned int bar_border_size  = 0;
+unsigned int bar_border_color = 0xff0000;
+unsigned int bar_padding_x    = 0;
+unsigned int bar_padding_y    = 0;
+unsigned long font_color      = 0xafafaf;
+unsigned long bar_color       = 0x191919;
+unsigned int font_size        = 12;
+char *font                    = "Monospace:size=12";
 
 #endif
 

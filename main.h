@@ -67,5 +67,17 @@ typedef struct Desktop {
   float master;
 } Desktop;
 
+
+typedef struct FontStruct {
+  XFontStruct* font;
+  GC gc;
+  unsigned long color;
+} FontStruct;
+
+typedef struct Bar {
+  Window window;
+  FontStruct *font;
+} Bar;
+
 #endif
 

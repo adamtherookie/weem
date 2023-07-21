@@ -7,6 +7,7 @@ Screen *screen;
 int scr_num;
 
 Window root;
+Bar bar;
 
 XWindowAttributes attr;
 
@@ -33,15 +34,17 @@ static inline void err(char *msg) {
   printf(ANSI_COLOR_RED " -> weem  ERR:" ANSI_COLOR_RESET " %s\n" , msg);
 }
 
-static inline int is_polybar(Display *display, Window window) {
+static inline int is_bar(Display *display, Window window) {
+  if (window == bar.window) return true;
+  
   XClassHint class_hint;
   if (XGetClassHint(display, window, &class_hint)) {
-    int is_polybar = strcmp(class_hint.res_name, "polybar") == 0 ||
-                      strcmp(class_hint.res_class, "Polybar") == 0;
+    int is_bar = strcmp(class_hint.res_name, "weembar") == 0;
     XFree(class_hint.res_name);
     XFree(class_hint.res_class);
-    return is_polybar;
+    return is_bar;
   }
+
   return false;
 }
 
@@ -107,7 +110,7 @@ void TileWindows() {
   }
 
   stack_windows = tiled_windows - 1;
-  unsigned int win_height = height - bar_margin;
+  unsigned int win_height = height - bar_size - bar_padding_y;
 
   if (tiled_windows == 0) {
     return;
@@ -119,7 +122,7 @@ void TileWindows() {
     c = head;
 
     x = gap_width;
-    y = (bar_position == top) ? (bar_margin + gap_width) : (gap_width);
+    y = (bar_position == top) ? (bar_size + gap_width + bar_padding_y) : (gap_width);
     w = width - (2 * gap_width) - (2 * border_width);
     h = win_height - (2 * gap_width) - (2 * border_width);
 
@@ -135,14 +138,14 @@ void TileWindows() {
 
         if (n == 0) {
           x = gap_width;
-          y = (bar_position == top) ? (bar_margin + gap_width) : (gap_width);
+          y = (bar_position == top) ? (bar_size + gap_width + bar_padding_y) : (gap_width);
           w = master_width - (border_width * 2);
           h = win_height - (border_width * 2) - (gap_width * 2);
         } else { 
           x = width * desktops[current_desktop].master;
           w = stack_width - (border_width * 2) + (gap_width);
           h = (win_height - (2 * border_width * stack_windows) - gap_width * (stack_windows + 1)) / stack_windows;
-          y = ((bar_position == top) ? (bar_margin + gap_width) : (gap_width)) + ((n - 1) * (h + gap_width + (2 * border_width)));
+          y = ((bar_position == top) ? (bar_size + gap_width + bar_padding_y) : (gap_width)) + ((n - 1) * (h + gap_width + (2 * border_width)));
         }
 
         XMoveResizeWindow(display, c->window, x, y, w, h);
@@ -356,6 +359,64 @@ static inline void FullscreenWindow() {
   }
 }
 
+FontStruct* create_font(char *font_name, unsigned long color, Window window) {
+  FontStruct* fs = (FontStruct*)malloc(sizeof(FontStruct));
+
+  fs->font = XLoadQueryFont(display, font_name);
+  fs->gc = XCreateGC(display, window, 0, NULL);
+  XSetForeground(display, fs->gc, color);
+  fs->color = color;
+
+  return fs;
+}
+
+static inline void UpdateBarCurrent(int num) {
+  XClearWindow(display, bar.window);
+  char str[1];
+  sprintf(str, "%d", num);
+  XDrawString(display, bar.window, bar.font->gc, 10, (bar_size / 1.5), str, 1);
+}
+
+static inline void DrawBarInfo() {
+  unsigned int offset = icons_offset;
+
+  for (unsigned int i = 0; i < NUM_DESKTOPS; i++) {
+    XSetForeground(display, bar.font->gc, (i == current_desktop) ? desktop_focus : desktop_unfocus);
+    XFillRectangle(display, bar.window, bar.font->gc, offset, 0, (int)icons_size * strlen(desktop_icons[i]) + icons_padding, bar_size);
+
+    if (desktops[i].head) {
+      XSetForeground(display, bar.font->gc, desktop_focus);
+      XFillRectangle(display, bar.window, bar.font->gc, offset, 0, (int)icons_size * strlen(desktop_icons[i]) + icons_padding, bar_size / 6);
+    }
+
+    XSetForeground(display, bar.font->gc, (i == current_desktop) ? (text_focus) : (text_unfocus));
+    XDrawString(display, bar.window, bar.font->gc, offset + (font_size / 2.0f), (bar_size / 2) + (font_size / 2), desktop_icons[i], strlen(desktop_icons[i]));    
+  
+    offset += icons_padding + (icons_size * strlen(desktop_icons[i]));
+  }
+}
+
+static inline void UpdateBar() {
+  DrawBarInfo();
+}
+
+static inline void CreateBar() {
+  if (!show_bar) return;
+
+  if (bar_position == top)
+    bar.window = XCreateSimpleWindow(display, root, bar_padding_x, bar_padding_y, width - (bar_padding_x * 2), bar_size, bar_border_size, bar_border_color, bar_color);
+  else
+    bar.window = XCreateSimpleWindow(display, root, bar_padding_x, height - bar_size - bar_padding_y, width - (bar_padding_x * 2), bar_size, bar_border_size, bar_border_color, bar_color);
+  
+  XSelectInput(display, bar.window, SubstructureRedirectMask | SubstructureNotifyMask);
+  XSetStandardProperties(display, bar.window, "weembar", "weembar", None, NULL, 0, NULL);
+  XMapWindow(display, bar.window);
+  bar.font = create_font(font, font_color, bar.window);
+
+  char *bar_content = "HELLO WORLD!";
+  XDrawString(display, bar.window, bar.font->gc, 10, (bar_size / 2.0f) + (font_size / 2.0f), bar_content, strlen(bar_content));
+}
+
 static inline void MoveUp() {
   if (!current || !current->prev) return;
 
@@ -504,6 +565,7 @@ static inline void OnKeyPress(XEvent e) {
 
 static inline void OnMotionNotify(XEvent e) {
   if (start.subwindow == None) return;
+  if (is_bar(display, start.subwindow)) return;
 
   int xdiff = e.xbutton.x_root - start.x_root;
   int ydiff = e.xbutton.y_root - start.y_root;
@@ -552,7 +614,8 @@ static inline void OnMotionNotify(XEvent e) {
 }
 
 static inline void OnMapRequest(XEvent e) {
-  if (is_polybar(display, e.xmaprequest.window)) {
+  if (is_bar(display, e.xmaprequest.window)) {
+    logger("we have a bar");
     XWindowAttributes attributes;
     XGetWindowAttributes(display, e.xmaprequest.window, &attributes);
 
@@ -621,8 +684,8 @@ void loop() {
       break;
     }
 
+    UpdateBar();
     XSetErrorHandler(NULL);
-
 
     switch(e.type) {
       case KeyPress: OnKeyPress(e); break;
@@ -684,6 +747,8 @@ void init() {
     attributes.cursor = XCreateFontCursor(display, XC_left_ptr);
     XChangeWindowAttributes(display, root, CWEventMask | CWCursor, &attributes);
     
+    if (!show_bar) bar_size = 0;
+    CreateBar();
     // system("~/.config/weem/autostart.sh");
   }
 }
