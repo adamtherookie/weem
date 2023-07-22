@@ -11,6 +11,9 @@
 #define top 1
 #define bottom 0
 
+#define overline 1
+#define underline 0
+
 #define MOD Mod4Mask
 #define SHIFT ShiftMask
 
@@ -71,7 +74,7 @@ unsigned int snap_threshold   = 10;
 float master_size             = 0.6;
 float master_tick             = 0.05;
 
-unsigned int gap_width        = 10;
+unsigned int gap_width        = 6;
 unsigned int border_width     = 2;
 unsigned long border_focus    = 0x999f63;
 unsigned long border_unfocus  = 0xafafaf;
@@ -83,6 +86,8 @@ const char *desktop_icons[NUM_DESKTOPS] = { "I", "II", "III", "IV", "V", "VI", "
 unsigned int icons_offset     = 0;
 unsigned int icons_size       = 7;
 unsigned int icons_padding    = 10;
+unsigned int bar_occu_size    = 3;
+unsigned int bar_occu_type    = underline;
 unsigned int desktop_focus    = 0x999f63;
 unsigned int desktop_unfocus  = 0x393939;
 unsigned int text_focus       = 0x393939;
@@ -97,7 +102,6 @@ unsigned int bar_padding_y    = 0;
 unsigned long font_color      = 0xafafaf;
 unsigned long bar_color       = 0x191919;
 unsigned int font_size        = 12;
-char *font                    = "Monospace:size=12";
+char *font_name               = "JetBrainsMono NF:size=12";
 
 #endif
-

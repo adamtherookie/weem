@@ -96,6 +96,12 @@ static inline void UpdateCurrent() {
       XSetWindowBorder(display, c->window, border_unfocus);
     }
   }
+
+  for (c = head; c; c = c->next) {
+    if (c->is_floating) {
+      XRaiseWindow(display, c->window);
+    }
+  }
 }
 
 void TileWindows() {
@@ -363,18 +369,12 @@ FontStruct* create_font(char *font_name, unsigned long color, Window window) {
   FontStruct* fs = (FontStruct*)malloc(sizeof(FontStruct));
 
   fs->font = XLoadQueryFont(display, font_name);
+  if (fs->font == NULL) err("font not found");
   fs->gc = XCreateGC(display, window, 0, NULL);
   XSetForeground(display, fs->gc, color);
   fs->color = color;
 
   return fs;
-}
-
-static inline void UpdateBarCurrent(int num) {
-  XClearWindow(display, bar.window);
-  char str[1];
-  sprintf(str, "%d", num);
-  XDrawString(display, bar.window, bar.font->gc, 10, (bar_size / 1.5), str, 1);
 }
 
 static inline void DrawBarInfo() {
@@ -386,7 +386,11 @@ static inline void DrawBarInfo() {
 
     if (desktops[i].head) {
       XSetForeground(display, bar.font->gc, desktop_focus);
-      XFillRectangle(display, bar.window, bar.font->gc, offset, 0, (int)icons_size * strlen(desktop_icons[i]) + icons_padding, bar_size / 6);
+      if (bar_occu_type == overline) {
+        XFillRectangle(display, bar.window, bar.font->gc, offset, 0, (int)icons_size * strlen(desktop_icons[i]) + icons_padding, bar_occu_size);
+      } else {
+        XFillRectangle(display, bar.window, bar.font->gc, offset, bar_size - bar_occu_size, (int)icons_size * strlen(desktop_icons[i]) + icons_padding, bar_occu_size);
+      }
     }
 
     XSetForeground(display, bar.font->gc, (i == current_desktop) ? (text_focus) : (text_unfocus));
@@ -397,6 +401,15 @@ static inline void DrawBarInfo() {
 }
 
 static inline void UpdateBar() {
+  Client *c;
+
+  int found = 0;
+  for (c = head; c; c = c->next) {
+    if (c->is_fullscreen) found = 1; 
+  }
+
+  if (!found) XRaiseWindow(display, bar.window);
+
   DrawBarInfo();
 }
 
@@ -411,10 +424,7 @@ static inline void CreateBar() {
   XSelectInput(display, bar.window, SubstructureRedirectMask | SubstructureNotifyMask);
   XSetStandardProperties(display, bar.window, "weembar", "weembar", None, NULL, 0, NULL);
   XMapWindow(display, bar.window);
-  bar.font = create_font(font, font_color, bar.window);
-
-  char *bar_content = "HELLO WORLD!";
-  XDrawString(display, bar.window, bar.font->gc, 10, (bar_size / 2.0f) + (font_size / 2.0f), bar_content, strlen(bar_content));
+  bar.font = create_font(font_name, font_color, bar.window);
 }
 
 static inline void MoveUp() {
