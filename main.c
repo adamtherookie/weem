@@ -759,7 +759,7 @@ void init() {
     
     if (!show_bar) bar_size = 0;
     CreateBar();
-    // system("~/.config/weem/autostart.sh");
+    system("~/.config/weem/autostart.sh");
   }
 }
 
