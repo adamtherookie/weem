@@ -33,19 +33,19 @@ KeyMod right      = { XK_Right, MOD };
 KeyMap keymap[num_keys] = {
   // Terminal
   [0].keysym = XK_Return,
-  [0].cmd =  { "kitty", NULL  },
+  [0].cmd =  "kitty",
   // Menu
   [1].keysym = XK_D,      
-  [1].cmd = { "rofi", "-show", "drun", NULL },
+  [1].cmd = "rofi -show drun",
   // Browser
   [2].keysym = XK_Q,
-  [2].cmd = { "qutebrowser", NULL },
+  [2].cmd = "qutebrowser",
   // Screenshot
   [3].keysym = XK_G,
-  [3].cmd = { "scrot", NULL },
+  [3].cmd = "scrot",
   // Wallpaper
   [4].keysym = XK_P,
-  [4].cmd = { "wp", "~/Pictures", NULL }
+  [4].cmd = "wp ~/Pictures",// wp is a script I made, change it for whatever wallpaper service you use
 };
 
 ChangeDesktop changedesktop[NUM_DESKTOPS] = {

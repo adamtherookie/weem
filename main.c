@@ -75,10 +75,10 @@ static inline void KillClient() {
   kill(current->window);
 }
 
-static inline void spawn(char **args) {
+static inline void spawn(char *args) {
   if (fork() == 0) {
     setsid();
-    execvp(args[0], args);
+    system(args);
     exit(EXIT_SUCCESS);
   }
 }

@@ -26,7 +26,7 @@
 
 typedef struct KeyMap {
   KeySym keysym;
-  char *cmd[10];
+  char *cmd;
 } KeyMap;
 
 typedef struct KeyMod {
