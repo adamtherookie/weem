@@ -26,6 +26,8 @@ int current_desktop = 0;
 
 unsigned int error_occurred = 0;
 
+int o_bar_size;
+
 static inline void logger(char *msg) {
   printf(ANSI_COLOR_GREEN " -> weem INFO:" ANSI_COLOR_RESET " %s\n", msg);
 }
@@ -403,12 +405,14 @@ static inline void DrawBarInfo() {
 static inline void UpdateBar() {
   Client *c;
 
+  /*
   int found = 0;
   for (c = head; c; c = c->next) {
     if (c->is_fullscreen) found = 1; 
   }
 
   if (!found) XRaiseWindow(display, bar.window);
+  */
 
   DrawBarInfo();
 }
@@ -489,6 +493,22 @@ static inline void DecMaster() {
   TileWindows();
 }
 
+static inline void ToggleBar() {
+  if (show_bar) {
+    XUnmapWindow(display, bar.window);
+    o_bar_size = bar_size;
+    bar_size = 0;
+    show_bar = 0;
+  } else {
+    XMapWindow(display, bar.window);
+    bar_size = o_bar_size;
+    show_bar = 1;
+  }
+
+  UpdateCurrent();
+  TileWindows();
+}
+
 static inline int ErrorHandler(Display *display, XErrorEvent *event) {
   char error_message[256];
   XGetErrorText(display, event->error_code, error_message, sizeof(error_message));
@@ -565,6 +585,10 @@ static inline void OnKeyPress(XEvent e) {
         ChangeDesk(changedesktop[i].desktop);
       }
     }
+  }
+
+  if (key.keycode == XKeysymToKeycode(display, toggle_bar.keysym)) {
+    ToggleBar();
   }
 
   if (key.keycode == XKeysymToKeycode(display, die.keysym)) {
@@ -747,6 +771,8 @@ void init() {
     XGrabKey(display, XKeysymToKeycode(display, down.keysym), down.mod, root, True, GrabModeAsync, GrabModeAsync);
     XGrabKey(display, XKeysymToKeycode(display, left.keysym), left.mod, root, True, GrabModeAsync, GrabModeAsync);
     XGrabKey(display, XKeysymToKeycode(display, right.keysym), right.mod, root, True, GrabModeAsync, GrabModeAsync);
+
+    XGrabKey(display, XKeysymToKeycode(display, toggle_bar.keysym), toggle_bar.mod, root, True, GrabModeAsync, GrabModeAsync);
 
     XGrabButton(display, AnyButton, MOD, root, True, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | OwnerGrabButtonMask, GrabModeAsync, GrabModeAsync, None, None);
 

@@ -67,7 +67,6 @@ typedef struct Desktop {
   float master;
 } Desktop;
 
-
 typedef struct FontStruct {
   XFontStruct* font;
   GC gc;

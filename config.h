@@ -28,6 +28,8 @@ KeyMod down       = { XK_Down, MOD };
 KeyMod left       = { XK_Left, MOD };
 KeyMod right      = { XK_Right, MOD };
 
+KeyMod toggle_bar = { XK_B, MOD };
+
 #define num_keys 5
 
 KeyMap keymap[num_keys] = {
