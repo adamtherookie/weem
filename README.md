@@ -38,6 +38,7 @@ Finally, add `exec weem` to the end of your `xinitrc`.
 | Super + F | Make window fullscreen |
 | Super + T | Make window tiled |
 | Super + S | Make window floating |
+| Super + B | Toggle bar |
 | Super + K | Kill weem |
 | Super + NUM_KEY | Switch to desktop |
 | Super + Shift + NUM_KEY | Send window to desktop |
