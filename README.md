@@ -3,6 +3,8 @@
 A small, lightweight, customizable X window manager written in C
 </div>
 
+![screenshot](./screenshot.png)
+
 ## Features
 - Tiling
 - Fullscreen

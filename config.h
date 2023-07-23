@@ -28,7 +28,7 @@ KeyMod down       = { XK_Down, MOD };
 KeyMod left       = { XK_Left, MOD };
 KeyMod right      = { XK_Right, MOD };
 
-#define num_keys 4
+#define num_keys 5
 
 KeyMap keymap[num_keys] = {
   // Terminal
@@ -42,7 +42,10 @@ KeyMap keymap[num_keys] = {
   [2].cmd = { "qutebrowser", NULL },
   // Screenshot
   [3].keysym = XK_G,
-  [3].cmd = { "flameshot", "gui", NULL }
+  [3].cmd = { "scrot", NULL },
+  // Wallpaper
+  [4].keysym = XK_P,
+  [4].cmd = { "wp", "~/Pictures", NULL }
 };
 
 ChangeDesktop changedesktop[NUM_DESKTOPS] = {
