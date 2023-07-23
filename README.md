@@ -6,7 +6,7 @@ A small, lightweight, customizable X window manager written in C
 ![screenshot](./screenshot.png)
 
 ## Features
-- Tiling
+- Tiling (master and stack)
 - Fullscreen
 - Multiple Desktops
 - Status Bar (in progress)
