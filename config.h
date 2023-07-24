@@ -44,7 +44,7 @@ KeyMap keymap[num_keys] = {
   [2].cmd = "qutebrowser",
   // Screenshot
   [3].keysym = XK_G,
-  [3].cmd = "ksnip -r",
+  [3].cmd = "scrot",
   // Wallpaper
   [4].keysym = XK_P,
   [4].cmd = "wp ~/Pictures",// wp is a script I made, change it for whatever wallpaper service you use
