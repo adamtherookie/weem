@@ -44,7 +44,7 @@ KeyMap keymap[num_keys] = {
   [2].cmd = "qutebrowser",
   // Screenshot
   [3].keysym = XK_G,
-  [3].cmd = "scrot",
+  [3].cmd = "ksnip -r",
   // Wallpaper
   [4].keysym = XK_P,
   [4].cmd = "wp ~/Pictures",// wp is a script I made, change it for whatever wallpaper service you use
@@ -97,6 +97,9 @@ unsigned int desktop_focus    = 0x5E81AC;
 unsigned int desktop_unfocus  = 0x3B4252;
 unsigned int text_focus       = 0x393939;
 unsigned int text_unfocus     = 0xECEFF4;
+
+unsigned int twelve_hour_time = true;
+unsigned int show_seconds     = false;
 
 unsigned int bar_position     = bottom;
 unsigned int bar_size         = 30;

@@ -380,6 +380,7 @@ FontStruct* create_font(char *font_name, unsigned long color, Window window) {
 }
 
 static inline void DrawBarInfo() {
+  XClearWindow(display, bar.window);
   unsigned int offset = icons_offset;
 
   for (unsigned int i = 0; i < NUM_DESKTOPS; i++) {
@@ -400,6 +401,39 @@ static inline void DrawBarInfo() {
   
     offset += icons_padding + (icons_size * strlen(desktop_icons[i]));
   }
+
+  time_t now = time(NULL);
+  struct tm *tm_info = localtime(&now);
+  char time_str[100];
+
+  if (twelve_hour_time)
+    if (show_seconds)
+      strftime(time_str, sizeof(time_str), "%a %d %b %I:%M:%S %p", tm_info);
+    else
+      strftime(time_str, sizeof(time_str), "%a %d %b %I:%M %p", tm_info);
+  else
+    if (show_seconds)
+      strftime(time_str, sizeof(time_str), "%a %d %b %H:%M:%S", tm_info);
+    else
+      strftime(time_str, sizeof(time_str), "%a %d %b %H:%M", tm_info);
+  
+  int time_x = width - strlen(time_str) * icons_size - bar_padding_x;
+  int time_y = (bar_size / 2) + (font_size / 2);
+
+  XSetForeground(display, bar.font->gc, desktop_unfocus);
+  XFillRectangle(display, bar.window, bar.font->gc, time_x - icons_padding, 0, strlen(time_str) * icons_size + icons_padding, bar_size);
+  XSetForeground(display, bar.font->gc, font_color);
+  XDrawString(display, bar.window, bar.font->gc, time_x, time_y, time_str, strlen(time_str));
+}
+
+void *BarUpdateLoop() {
+  while (true) {
+    DrawBarInfo();
+    XFlush(display);
+    sleep(1);
+  }
+
+  return NULL;
 }
 
 static inline void UpdateBar() {
@@ -791,6 +825,10 @@ void init() {
 
 int main(void) {
   init(); 
+
+  pthread_t bar_thread;
+  pthread_create(&bar_thread, NULL, BarUpdateLoop, NULL);
+
   loop();
 
   XCloseDisplay(display);
