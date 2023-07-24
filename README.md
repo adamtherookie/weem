@@ -11,15 +11,26 @@ A small, lightweight, customizable X window manager written in C.
 - Tiling (master and stack)
 - Fullscreen
 - Multiple Desktops
-- Status Bar (in progress)
+- Status Bar
 - Autostart script
 
 ## Installing
 Clone the repo:
-```console
+```sh
 git clone https://github.com/adamtherookie/weem
 ```
-Edit `config.h` to match your preferences, setup the startup script at `~/.config/weem/autostart.sh` if you wish, then run the install script (requires root access): `sudo sh install.sh`.
+Edit `config.h` to match your preferences. Setup the startup script at `~/.config/weem/autostart.sh` if you wish. If you do, make sure you execute `bar.sh` in the background there to update the status bar. For example, a startup script that launches picom and the bar script:
+
+```sh
+#!/bin/sh
+
+picom &
+path_to_where_you_cloned_weem/bar.sh &
+```
+
+You can also edit `bar.sh` to change what is shown in the status bar. 
+
+Then, run the install script (requires root access): `sudo sh install.sh`.
 
 Upon changing the configuration, you need to rerun the install script for the changes to take place. 
 

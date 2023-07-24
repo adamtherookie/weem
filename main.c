@@ -424,13 +424,44 @@ static inline void DrawBarInfo() {
   XFillRectangle(display, bar.window, bar.font->gc, time_x - icons_padding, 0, strlen(time_str) * icons_size + icons_padding, bar_size);
   XSetForeground(display, bar.font->gc, font_color);
   XDrawString(display, bar.window, bar.font->gc, time_x, time_y, time_str, strlen(time_str));
+
+  int clock_width = strlen(time_str) * icons_size + icons_padding;
+
+  char custom_text[100];
+  
+  char *home_dir = getenv("HOME");
+
+  char path[100];
+  snprintf(path, sizeof(path), "%s/.weembar", home_dir);
+
+  FILE *fp = fopen(path, "r");
+  if (fp != NULL) {
+    fgets(custom_text, sizeof(custom_text), fp);
+    fclose(fp);
+
+    char* newline = strchr(custom_text, '\n');
+    if (newline != NULL) {
+      *newline = '\0';
+    }
+
+    int custom_text_width = strlen(custom_text) * icons_size;
+    int custom_text_x = time_x - custom_text_width;
+    int custom_text_y = (bar_size / 2) + (font_size / 2);
+
+    XSetForeground(display, bar.font->gc, desktop_unfocus);
+    XFillRectangle(display, bar.window, bar.font->gc, custom_text_x - icons_padding, 0, custom_text_width + icons_padding, bar_size);
+    XSetForeground(display, bar.font->gc, font_color);
+    XDrawString(display, bar.window, bar.font->gc, custom_text_x, custom_text_y, custom_text, strlen(custom_text));
+  } else {
+    logger("nope");
+  }
 }
 
 void *BarUpdateLoop() {
   while (true) {
     DrawBarInfo();
     XFlush(display);
-    sleep(1);
+    sleep(bar_refresh_rate);
   }
 
   return NULL;

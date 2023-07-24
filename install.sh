@@ -10,4 +10,6 @@ sh build.sh
 echo " -> Installing"
 sudo cp ./weem /usr/bin
 
+touch ~/.weembar
+
 echo "[x] Installation finished. You can find the autostart script at ~/.config/weem/autostart.sh"
