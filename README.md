@@ -1,7 +1,9 @@
 <div style="text-align:center">
 <h1>weem</h1>
-A small, lightweight, customizable X window manager written in C
+A small, lightweight, customizable X window manager written in C.
 </div>
+
+<hr>
 
 ![screenshot](./screenshot.png)
 
