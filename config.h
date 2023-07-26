@@ -17,6 +17,8 @@
 #define MOD Mod4Mask
 #define SHIFT ShiftMask
 
+#define DEFAULT_LAYOUT MASTER_STACK
+
 KeyMod set_layout_master_stack       = { XK_T, MOD | SHIFT };
 KeyMod set_layout_stripes_vertical   = { XK_V, MOD | SHIFT };
 KeyMod set_layout_stripes_horizontal = { XK_H, MOD | SHIFT };

@@ -73,6 +73,7 @@ typedef struct Desktop {
   Client *current;
 
   float master;
+  int layout;
 } Desktop;
 
 typedef struct FontStruct {

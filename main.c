@@ -23,7 +23,6 @@ static Client *current = NULL;
 
 static Desktop desktops[NUM_DESKTOPS];
 int current_desktop = 0;
-int current_layout = MASTER_STACK;
 
 unsigned int error_occurred = 0;
 
@@ -108,7 +107,7 @@ static inline void UpdateCurrent() {
 }
 
 void TileWindows() {
-  if (current_layout == MASTER_STACK) {
+  if (desktops[current_desktop].layout == MASTER_STACK) {
     unsigned int tiled_windows = 0;
     unsigned int stack_windows = 0;
     Client *c;
@@ -163,7 +162,7 @@ void TileWindows() {
         }
       }
     }
-  } else if (current_layout == STRIPES_VERTICAL) {
+  } else if (desktops[current_desktop].layout == STRIPES_VERTICAL) {
     int windows = 0;
     Client *c;
 
@@ -182,7 +181,7 @@ void TileWindows() {
       XMoveResizeWindow(display, c->window, offset, gap_width, window_width, window_height);
       offset += window_width + gap_width;
     }
-  } else if (current_layout = STRIPES_HORIZONTAL) {
+  } else if (desktops[current_desktop].layout = STRIPES_HORIZONTAL) {
     int windows = 0;
     Client *c;
 
@@ -652,19 +651,19 @@ static inline void OnKeyPress(XEvent e) {
   }
 
   if (key.keycode == XKeysymToKeycode(display, set_layout_master_stack.keysym) && (key.state ^ set_layout_master_stack.mod) == 0) {
-    current_layout = MASTER_STACK;
+    desktops[current_desktop].layout = MASTER_STACK;
     TileWindows();
     return;
   }
 
   if (key.keycode == XKeysymToKeycode(display, set_layout_stripes_horizontal.keysym) && (key.state ^ set_layout_stripes_horizontal.mod) == 0) {
-    current_layout = STRIPES_HORIZONTAL;
+    desktops[current_desktop].layout = STRIPES_HORIZONTAL;
     TileWindows();
     return;
   }
 
   if (key.keycode == XKeysymToKeycode(display, set_layout_stripes_vertical.keysym) && (key.state ^ set_layout_stripes_vertical.mod) == 0) {
-    current_layout = STRIPES_VERTICAL;
+    desktops[current_desktop].layout = STRIPES_VERTICAL;
     TileWindows();
     return;
   }
@@ -717,8 +716,6 @@ static inline void OnKeyPress(XEvent e) {
         ChangeDesk(changedesktop[i].desktop);
       }
     }
-
-    return;
   }
 
   if (key.keycode == XKeysymToKeycode(display, toggle_bar.keysym) && (key.state ^ toggle_bar.mod) == 0) {
@@ -892,6 +889,7 @@ void init() {
       desktops[i].head = head;
       desktops[i].current = current;
       desktops[i].master = master_size;
+      desktops[i].layout = DEFAULT_LAYOUT;
     }
 
     ChangeDesk(0);
