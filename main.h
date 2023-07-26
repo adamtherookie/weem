@@ -26,6 +26,12 @@
 #define ANSI_COLOR_CYAN    "\x1b[36m"
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
+enum {
+  MASTER_STACK,
+  STRIPES_VERTICAL,
+  STRIPES_HORIZONTAL
+};
+
 typedef struct KeyMap {
   KeySym keysym;
   char *cmd;

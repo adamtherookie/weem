@@ -11,6 +11,7 @@ A small, lightweight, customizable X window manager written in C.
 - Tiling (master and stack)
 - Fullscreen
 - Multiple Desktops
+- Multiple Layouts
 - Status Bar
 - Autostart script
 
@@ -51,6 +52,9 @@ Finally, add `exec weem` to the end of your `xinitrc`.
 | Super + F | Make window fullscreen |
 | Super + T | Make window tiled |
 | Super + S | Make window floating |
+| Super + Shift + T | Set layout to master + stack |
+| Super + Shift + V | Set layout to vertical stripes |
+| Super + Shift + H | Set layout to horizontal stripes |
 | Super + B | Toggle bar |
 | Super + K | Kill weem |
 | Super + NUM_KEY | Switch to desktop |

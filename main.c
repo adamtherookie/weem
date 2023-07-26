@@ -23,6 +23,7 @@ static Client *current = NULL;
 
 static Desktop desktops[NUM_DESKTOPS];
 int current_desktop = 0;
+int current_layout = MASTER_STACK;
 
 unsigned int error_occurred = 0;
 
@@ -107,58 +108,98 @@ static inline void UpdateCurrent() {
 }
 
 void TileWindows() {
-  unsigned int tiled_windows = 0;
-  unsigned int stack_windows = 0;
-  Client *c;
+  if (current_layout == MASTER_STACK) {
+    unsigned int tiled_windows = 0;
+    unsigned int stack_windows = 0;
+    Client *c;
 
-  for (c = head; c; c = c->next) {
-    if (c->desktop == current_desktop && c->is_tiled) {
-      tiled_windows++;
-    }
-  }
-
-  stack_windows = tiled_windows - 1;
-  unsigned int win_height = height - bar_size - bar_padding_y;
-
-  if (tiled_windows == 0) {
-    return;
-  }
-
-  if (tiled_windows == 1) {
-    unsigned int x, y, w, h;
-
-    c = head;
-
-    x = gap_width;
-    y = (bar_position == top) ? (bar_size + gap_width + bar_padding_y) : (gap_width);
-    w = width - (2 * gap_width) - (2 * border_width);
-    h = win_height - (2 * gap_width) - (2 * border_width);
-
-    XMoveResizeWindow(display, c->window, x, y, w, h);
-  } else {
-    unsigned int master_width = (width * desktops[current_desktop].master) - (gap_width * 2);
-    unsigned int stack_width = (width * (1 - desktops[current_desktop].master)) - (gap_width * 2);
-
-    unsigned int n = 0;
     for (c = head; c; c = c->next) {
-      if (c->desktop == current_desktop && !c->is_fullscreen && !c->is_floating) {
-        unsigned int x, y, w, h;
-
-        if (n == 0) {
-          x = gap_width;
-          y = (bar_position == top) ? (bar_size + gap_width + bar_padding_y) : (gap_width);
-          w = master_width - (border_width * 2);
-          h = win_height - (border_width * 2) - (gap_width * 2);
-        } else { 
-          x = width * desktops[current_desktop].master;
-          w = stack_width - (border_width * 2) + (gap_width);
-          h = (win_height - (2 * border_width * stack_windows) - gap_width * (stack_windows + 1)) / stack_windows;
-          y = ((bar_position == top) ? (bar_size + gap_width + bar_padding_y) : (gap_width)) + ((n - 1) * (h + gap_width + (2 * border_width)));
-        }
-
-        XMoveResizeWindow(display, c->window, x, y, w, h);
-        n++;
+      if (c->desktop == current_desktop && c->is_tiled) {
+        tiled_windows++;
       }
+    }
+
+    stack_windows = tiled_windows - 1;
+    unsigned int win_height = height - bar_size - bar_padding_y;
+
+    if (tiled_windows == 0) {
+      return;
+    }
+
+    if (tiled_windows == 1) {
+      unsigned int x, y, w, h;
+
+      c = head;
+
+      x = gap_width;
+      y = (bar_position == top) ? (bar_size + gap_width + bar_padding_y) : (gap_width);
+      w = width - (2 * gap_width) - (2 * border_width);
+      h = win_height - (2 * gap_width) - (2 * border_width);
+
+      XMoveResizeWindow(display, c->window, x, y, w, h);
+    } else {
+      unsigned int master_width = (width * desktops[current_desktop].master) - (gap_width * 2);
+      unsigned int stack_width = (width * (1 - desktops[current_desktop].master)) - (gap_width * 2);
+
+      unsigned int n = 0;
+      for (c = head; c; c = c->next) {
+        if (c->desktop == current_desktop && !c->is_fullscreen && !c->is_floating) {
+          unsigned int x, y, w, h;
+
+          if (n == 0) {
+            x = gap_width;
+            y = (bar_position == top) ? (bar_size + gap_width + bar_padding_y) : (gap_width);
+            w = master_width - (border_width * 2);
+            h = win_height - (border_width * 2) - (gap_width * 2);
+          } else { 
+            x = width * desktops[current_desktop].master;
+            w = stack_width - (border_width * 2) + (gap_width);
+            h = (win_height - (2 * border_width * stack_windows) - gap_width * (stack_windows + 1)) / stack_windows;
+            y = ((bar_position == top) ? (bar_size + gap_width + bar_padding_y) : (gap_width)) + ((n - 1) * (h + gap_width + (2 * border_width)));
+          }
+
+          XMoveResizeWindow(display, c->window, x, y, w, h);
+          n++;
+        }
+      }
+    }
+  } else if (current_layout == STRIPES_VERTICAL) {
+    int windows = 0;
+    Client *c;
+
+    for (c = head; c; c = c->next) {
+      if (c->is_tiled) windows ++;
+    }
+
+    int window_width = (width - (windows + 1) * gap_width) / windows;
+    int window_height = height - bar_size - 2 * gap_width;
+
+    int offset = gap_width;
+
+    for (c = head; c; c = c->next) {
+      if (!c->is_tiled) continue;
+
+      XMoveResizeWindow(display, c->window, offset, gap_width, window_width, window_height);
+      offset += window_width + gap_width;
+    }
+  } else if (current_layout = STRIPES_HORIZONTAL) {
+    int windows = 0;
+    Client *c;
+
+    for (c = head; c; c = c->next) {
+      if (c->is_tiled) windows ++;
+    }
+
+    int window_width = width - gap_width * 2;
+    int window_height = (height - bar_size - (windows + 1) * gap_width) / windows;
+
+    int offset = gap_width;
+
+    for (c = head; c; c = c->next) {
+      if (!c->is_tiled) continue;
+
+      XMoveResizeWindow(display, c->window, gap_width, offset, window_width, window_height);
+      offset += window_height + gap_width;
     }
   }
 }
@@ -610,36 +651,62 @@ static inline void OnKeyPress(XEvent e) {
     }
   }
 
-  if (key.keycode == XKeysymToKeycode(display, kill_win.keysym)) {
+  if (key.keycode == XKeysymToKeycode(display, set_layout_master_stack.keysym) && (key.state ^ set_layout_master_stack.mod) == 0) {
+    current_layout = MASTER_STACK;
+    TileWindows();
+    return;
+  }
+
+  if (key.keycode == XKeysymToKeycode(display, set_layout_stripes_horizontal.keysym) && (key.state ^ set_layout_stripes_horizontal.mod) == 0) {
+    current_layout = STRIPES_HORIZONTAL;
+    TileWindows();
+    return;
+  }
+
+  if (key.keycode == XKeysymToKeycode(display, set_layout_stripes_vertical.keysym) && (key.state ^ set_layout_stripes_vertical.mod) == 0) {
+    current_layout = STRIPES_VERTICAL;
+    TileWindows();
+    return;
+  }
+
+  if (key.keycode == XKeysymToKeycode(display, kill_win.keysym) && (key.state ^ kill_win.mod) == 0) {
     KillClient();
+    return;
   }
 
-  if (key.keycode == XKeysymToKeycode(display, fullscreen.keysym)) {
+  if (key.keycode == XKeysymToKeycode(display, fullscreen.keysym) && (key.state ^ fullscreen.mod) == 0) {
     FullscreenWindow();
+    return;
   }
 
-  if (key.keycode == XKeysymToKeycode(display, tile.keysym)) {
+  if (key.keycode == XKeysymToKeycode(display, tile.keysym) && (key.state ^ tile.mod) == 0) {
     TileWindow();
+    return;
   }
 
-  if (key.keycode == XKeysymToKeycode(display, floating.keysym)) {
+  if (key.keycode == XKeysymToKeycode(display, floating.keysym) && (key.state ^ floating.mod) == 0) {
     FloatWindow();
+    return;
   }
 
-  if (key.keycode == XKeysymToKeycode(display, up.keysym)) {
+  if (key.keycode == XKeysymToKeycode(display, up.keysym) && (key.state ^ up.mod) == 0) {
     MoveUp();
+    return;
   }
 
-  if (key.keycode == XKeysymToKeycode(display, down.keysym)) {
+  if (key.keycode == XKeysymToKeycode(display, down.keysym) && (key.state ^ down.mod) == 0) {
     MoveDown();
+    return;
   }
 
-  if (key.keycode == XKeysymToKeycode(display, right.keysym)) {
+  if (key.keycode == XKeysymToKeycode(display, right.keysym) && (key.state ^ right.mod) == 0) {
     IncMaster();
+    return;
   }
 
-  if (key.keycode == XKeysymToKeycode(display, left.keysym)) {
+  if (key.keycode == XKeysymToKeycode(display, left.keysym) && (key.state ^ left.mod) == 0) {
     DecMaster();
+    return;
   }
 
   for (int i = 0; i < NUM_DESKTOPS; i ++) {
@@ -650,13 +717,16 @@ static inline void OnKeyPress(XEvent e) {
         ChangeDesk(changedesktop[i].desktop);
       }
     }
+
+    return;
   }
 
-  if (key.keycode == XKeysymToKeycode(display, toggle_bar.keysym)) {
+  if (key.keycode == XKeysymToKeycode(display, toggle_bar.keysym) && (key.state ^ toggle_bar.mod) == 0) {
     ToggleBar();
+    return;
   }
 
-  if (key.keycode == XKeysymToKeycode(display, die.keysym)) {
+  if (key.keycode == XKeysymToKeycode(display, die.keysym) && (key.state ^ die.mod) == 0) {
     XCloseDisplay(display);
     exit(EXIT_SUCCESS);
   }
@@ -837,6 +907,10 @@ void init() {
     XGrabKey(display, XKeysymToKeycode(display, left.keysym), left.mod, root, True, GrabModeAsync, GrabModeAsync);
     XGrabKey(display, XKeysymToKeycode(display, right.keysym), right.mod, root, True, GrabModeAsync, GrabModeAsync);
 
+    XGrabKey(display, XKeysymToKeycode(display, set_layout_master_stack.keysym), set_layout_master_stack.mod, root, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(display, XKeysymToKeycode(display, set_layout_stripes_horizontal.keysym), set_layout_stripes_horizontal.mod, root, True, GrabModeAsync, GrabModeAsync);    
+    XGrabKey(display, XKeysymToKeycode(display, set_layout_stripes_vertical.keysym), set_layout_stripes_vertical.mod, root, True, GrabModeAsync, GrabModeAsync);
+    
     XGrabKey(display, XKeysymToKeycode(display, toggle_bar.keysym), toggle_bar.mod, root, True, GrabModeAsync, GrabModeAsync);
 
     XGrabButton(display, AnyButton, MOD, root, True, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | OwnerGrabButtonMask, GrabModeAsync, GrabModeAsync, None, None);
