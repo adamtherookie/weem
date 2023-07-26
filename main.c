@@ -843,15 +843,12 @@ static inline void OnDestroyNotify(XEvent e) {
 
 void loop() {
   while(true) {
-    XSetErrorHandler(ErrorHandler);
-
     if (XNextEvent(display, &e) != 0) {
       err("event error");
       break;
     }
 
     UpdateBar();
-    XSetErrorHandler(NULL);
 
     switch(e.type) {
       case KeyPress: OnKeyPress(e); break;
@@ -932,7 +929,9 @@ int main(void) {
   pthread_t bar_thread;
   pthread_create(&bar_thread, NULL, BarUpdateLoop, NULL);
 
+  XSetErrorHandler(ErrorHandler);
   loop();
+  XSetErrorHandler(NULL);
 
   XCloseDisplay(display);
   return 0;
