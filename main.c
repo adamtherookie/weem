@@ -171,7 +171,7 @@ void TileWindows() {
     }
 
     int window_width = (width - (windows + 1) * gap_width) / windows;
-    int window_height = height - bar_size - 2 * gap_width;
+    int window_height = height - bar_size - 3 * gap_width;
 
     int offset = gap_width;
 
@@ -190,7 +190,7 @@ void TileWindows() {
     }
 
     int window_width = width - gap_width * 2;
-    int window_height = (height - bar_size - (windows + 1) * gap_width) / windows;
+    int window_height = (height - bar_size - gap_width - (windows + 1) * gap_width) / windows;
 
     int offset = gap_width;
 
