@@ -4,6 +4,7 @@
 #include <X11/Xlib.h>
 #include <X11/keysym.h>
 #include "main.h"
+#include "colors.h"
 
 #define true 1
 #define false 0
@@ -96,8 +97,8 @@ float master_tick             = 0.05;
 
 unsigned int gap_width        = 6;
 unsigned int border_width     = 2;
-unsigned long border_focus    = 0x5E81AC;
-unsigned long border_unfocus  = 0x3B4252;
+unsigned long border_focus    = nord1;
+unsigned long border_unfocus  = nord3;
 
 // weembar
 unsigned int show_bar         = true;
@@ -106,12 +107,12 @@ const char *desktop_icons[NUM_DESKTOPS] = { "I", "II", "III", "IV", "V", "VI", "
 unsigned int icons_offset     = 0;
 unsigned int icons_size       = 7;
 unsigned int icons_padding    = 10;
-unsigned int bar_occu_size    = 3;
+unsigned int bar_occu_size    = 1;
 unsigned int bar_occu_type    = underline;
-unsigned int desktop_focus    = 0x5E81AC;
-unsigned int desktop_unfocus  = 0x3B4252;
-unsigned int text_focus       = 0x393939;
-unsigned int text_unfocus     = 0xECEFF4;
+unsigned long desktop_focus    = color12;
+unsigned long desktop_unfocus  = nord1;
+unsigned long text_focus       = nord6;
+unsigned long text_unfocus     = nord6;
 
 float bar_refresh_rate        = 1;
 
@@ -121,12 +122,13 @@ unsigned int show_seconds     = false;
 unsigned int bar_position     = bottom;
 unsigned int bar_size         = 30;
 unsigned int bar_border_size  = 0;
-unsigned int bar_border_color = 0xff0000;
+unsigned long bar_border_color = nord3;
 unsigned int bar_padding_x    = 0;
 unsigned int bar_padding_y    = 0;
-unsigned long font_color      = 0xECEFF4;
-unsigned long bar_color       = 0x2E3440;
+unsigned long font_color      = nord6;
+unsigned long bar_color       = nord0;
 unsigned int font_size        = 12;
 char *font_name               = "JetBrainsMono NF:size=12";
 
 #endif
+
