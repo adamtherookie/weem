@@ -13,6 +13,7 @@
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
 #include <X11/cursorfont.h>
+#include <X11/Xft/Xft.h>
 
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -77,14 +78,14 @@ typedef struct Desktop {
 } Desktop;
 
 typedef struct FontStruct {
-  XFontStruct* font;
-  GC gc;
-  unsigned long color;
+  XftFont *xft_font;
+  XftColor xft_color;
+  XftDraw *xft_draw;
 } FontStruct;
 
 typedef struct Bar {
   Window window;
-  FontStruct *font;
+  FontStruct font;
 } Bar;
 
 #endif

@@ -407,41 +407,52 @@ static inline void FullscreenWindow() {
   }
 }
 
-FontStruct* create_font(char *font_name, unsigned long color, Window window) {
-  FontStruct* fs = (FontStruct*)malloc(sizeof(FontStruct));
+FontStruct create_font(char *font_name, char *color, Window window) {
+  FontStruct fs;
 
-  fs->font = XLoadQueryFont(display, font_name);
-  if (fs->font == NULL) err("font not found");
-  fs->gc = XCreateGC(display, window, 0, NULL);
-  XSetForeground(display, fs->gc, color);
-  fs->color = color;
+  XftFont *xft_font = XftFontOpenName(display, DefaultScreen(display), font_name);
 
+  XftDraw *xft_draw = XftDrawCreate(display, window, DefaultVisual(display, DefaultScreen(display)), DefaultColormap(display, DefaultScreen(display)));
+
+  XftColor xft_color;
+  XftColorAllocName(display, DefaultVisual(display, 0), DefaultColormap(display, 0), color, &xft_color);
+
+  fs.xft_font = xft_font;
+  fs.xft_draw = xft_draw;
+  fs.xft_color = xft_color;
+  
   return fs;
 }
 
-static inline void DrawBarInfo() {
-  XClearWindow(display, bar.window);
+static inline void DrawStr(char *string, FontStruct font, int x, int y) {
+  XftDrawStringUtf8(font.xft_draw, &font.xft_color, font.xft_font, x, y, (XftChar8 *)string, strlen(string));
+}
+
+static inline void DrawDesktops() {
   unsigned int offset = icons_offset;
 
   for (unsigned int i = 0; i < NUM_DESKTOPS; i++) {
-    XSetForeground(display, bar.font->gc, (i == current_desktop) ? desktop_focus : desktop_unfocus);
-    XFillRectangle(display, bar.window, bar.font->gc, offset, 0, (int)icons_size * strlen(desktop_icons[i]) + icons_padding, bar_size);
+    XSetForeground(display, DefaultGC(display, DefaultScreen(display)), (i == current_desktop) ? desktop_focus : desktop_unfocus);
+    XFillRectangle(display, bar.window, DefaultGC(display, DefaultScreen(display)), offset, 0, (int)icons_size * strlen(desktop_icons[i]) + icons_padding, bar_size);
 
     if (desktops[i].head) {
-      XSetForeground(display, bar.font->gc, desktop_focus);
+      XSetForeground(display, DefaultGC(display, DefaultScreen(display)), desktop_focus);
       if (bar_occu_type == overline) {
-        XFillRectangle(display, bar.window, bar.font->gc, offset, 0, (int)icons_size * strlen(desktop_icons[i]) + icons_padding, bar_occu_size);
+        XFillRectangle(display, bar.window, DefaultGC(display, DefaultScreen(display)), offset, 0, (int)icons_size * strlen(desktop_icons[i]) + icons_padding, bar_occu_size);
       } else {
-        XFillRectangle(display, bar.window, bar.font->gc, offset, bar_size - bar_occu_size, (int)icons_size * strlen(desktop_icons[i]) + icons_padding, bar_occu_size);
+        XFillRectangle(display, bar.window, DefaultGC(display, DefaultScreen(display)), offset, bar_size - bar_occu_size, (int)icons_size * strlen(desktop_icons[i]) + icons_padding, bar_occu_size);
       }
     }
 
-    XSetForeground(display, bar.font->gc, (i == current_desktop) ? (text_focus) : (text_unfocus));
-    XDrawString(display, bar.window, bar.font->gc, offset + (font_size / 2.0f), (bar_size / 2) + (font_size / 2), desktop_icons[i], strlen(desktop_icons[i]));    
-  
+    XSetForeground(display, DefaultGC(display, DefaultScreen(display)), (i == current_desktop) ? (text_focus) : (text_unfocus));
+    // XDrawString(display, bar.window, bar.font->gc, offset + (font_size / 2.0f), (bar_size / 2) + (font_size / 2), desktop_icons[i], strlen(desktop_icons[i]));    
+    
+    DrawStr(desktop_icons[i], bar.font, offset + (font_size / 2), (bar_size / 2) + (font_size / 2));
     offset += icons_padding + (icons_size * strlen(desktop_icons[i]));
   }
+}
 
+static inline void DrawTimeAndCustom() {
   time_t now = time(NULL);
   struct tm *tm_info = localtime(&now);
   char time_str[100];
@@ -457,15 +468,17 @@ static inline void DrawBarInfo() {
     else
       strftime(time_str, sizeof(time_str), "%a %d %b %H:%M", tm_info);
   
-  int time_x = width - strlen(time_str) * icons_size - bar_padding_x;
+  int time_x = width - strlen(time_str) * icons_size - icons_padding - bar_padding_x;
   int time_y = (bar_size / 2) + (font_size / 2);
 
-  XSetForeground(display, bar.font->gc, desktop_unfocus);
-  XFillRectangle(display, bar.window, bar.font->gc, time_x - icons_padding, 0, strlen(time_str) * icons_size + icons_padding, bar_size);
-  XSetForeground(display, bar.font->gc, font_color);
-  XDrawString(display, bar.window, bar.font->gc, time_x, time_y, time_str, strlen(time_str));
+  XSetForeground(display, DefaultGC(display, DefaultScreen(display)), desktop_unfocus);
+  XFillRectangle(display, bar.window, DefaultGC(display, DefaultScreen(display)), time_x - icons_padding, 0, strlen(time_str) * icons_size + icons_padding, bar_size);
+  XSetForeground(display, DefaultGC(display, DefaultScreen(display)), font_color);
+ 
+  // XDrawString(display, bar.window, bar.font->gc, time_x, time_y, time_str, strlen(time_str));
+  DrawStr(time_str, bar.font, time_x - icons_padding, time_y);
 
-  int clock_width = strlen(time_str) * icons_size + icons_padding;
+  int clock_width = strlen(time_str) * icons_size + icons_padding * 2;
 
   char custom_text[100];
   
@@ -485,41 +498,38 @@ static inline void DrawBarInfo() {
     }
 
     int custom_text_width = strlen(custom_text) * icons_size;
-    int custom_text_x = time_x - custom_text_width;
+    int custom_text_x = time_x - custom_text_width - icons_padding;
     int custom_text_y = (bar_size / 2) + (font_size / 2);
 
-    XSetForeground(display, bar.font->gc, desktop_unfocus);
-    XFillRectangle(display, bar.window, bar.font->gc, custom_text_x - icons_padding, 0, custom_text_width + icons_padding, bar_size);
-    XSetForeground(display, bar.font->gc, font_color);
-    XDrawString(display, bar.window, bar.font->gc, custom_text_x, custom_text_y, custom_text, strlen(custom_text));
+    XSetForeground(display, DefaultGC(display, DefaultScreen(display)), desktop_unfocus);
+    XFillRectangle(display, bar.window, DefaultGC(display, DefaultScreen(display)), custom_text_x - icons_padding, 0, custom_text_width + icons_padding, bar_size);
+    XSetForeground(display, DefaultGC(display, DefaultScreen(display)), font_color);
+    
+    // XDrawString(display, bar.window, bar.font->gc, custom_text_x, custom_text_y, custom_text, strlen(custom_text));
+    DrawStr(custom_text, bar.font, custom_text_x, custom_text_y);
   } else {
     logger("nope");
   }
 }
 
+/*
+static inline void DrawBarInfo() {
+  XClearWindow(display, bar.window);
+  
+  DrawDesktops();
+  DrawTimeAndCustom();
+}
+*/
+
 void *BarUpdateLoop() {
   while (true) {
-    DrawBarInfo();
+    DrawDesktops();
+    DrawTimeAndCustom();
     XFlush(display);
-    sleep(bar_refresh_rate);
+    usleep(bar_refresh_rate);
   }
 
   return NULL;
-}
-
-static inline void UpdateBar() {
-  Client *c;
-
-  /*
-  int found = 0;
-  for (c = head; c; c = c->next) {
-    if (c->is_fullscreen) found = 1; 
-  }
-
-  if (!found) XRaiseWindow(display, bar.window);
-  */
-
-  DrawBarInfo();
 }
 
 static inline void CreateBar() {
@@ -533,7 +543,7 @@ static inline void CreateBar() {
   XSelectInput(display, bar.window, SubstructureRedirectMask | SubstructureNotifyMask);
   XSetStandardProperties(display, bar.window, "weembar", "weembar", None, NULL, 0, NULL);
   XMapWindow(display, bar.window);
-  bar.font = create_font(font_name, font_color, bar.window);
+  bar.font = create_font(font_name, "#ffffff", bar.window); // TODO: Make it so that it uses an unsigned long as color input
 }
 
 static inline void MoveUp() {
@@ -848,7 +858,7 @@ void loop() {
       break;
     }
 
-    UpdateBar();
+    // DrawDesktops();
 
     switch(e.type) {
       case KeyPress: OnKeyPress(e); break;
@@ -933,6 +943,7 @@ int main(void) {
   loop();
   XSetErrorHandler(NULL);
 
+  system("killall bar.sh");
   XCloseDisplay(display);
   return 0;
 }

@@ -102,10 +102,10 @@ unsigned long border_unfocus  = 0x3B4252;
 // weembar
 unsigned int show_bar         = true;
 
-const char *desktop_icons[NUM_DESKTOPS] = { "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X" };
+char *desktop_icons[NUM_DESKTOPS] = { "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X" };
 unsigned int icons_offset     = 0;
 unsigned int icons_size       = 7;
-unsigned int icons_padding    = 10;
+unsigned int icons_padding    = 10; // for best results, make it (icons_size + (font_size / 2))
 unsigned int bar_occu_size    = 3;
 unsigned int bar_occu_type    = underline;
 unsigned int desktop_focus    = 0x5E81AC;
@@ -113,7 +113,7 @@ unsigned int desktop_unfocus  = 0x3B4252;
 unsigned int text_focus       = 0x393939;
 unsigned int text_unfocus     = 0xECEFF4;
 
-float bar_refresh_rate        = 1;
+unsigned int bar_refresh_rate = 10000; // in microseconds: 1s is recommended
 
 unsigned int twelve_hour_time = true;
 unsigned int show_seconds     = false;
@@ -126,7 +126,7 @@ unsigned int bar_padding_x    = 0;
 unsigned int bar_padding_y    = 0;
 unsigned long font_color      = 0xECEFF4;
 unsigned long bar_color       = 0x2E3440;
-unsigned int font_size        = 12;
-char *font_name               = "JetBrainsMono NF:size=12";
+unsigned int font_size        = 9;
+char *font_name               = "Blex Mono Nerd Font:size=9";
 
 #endif
