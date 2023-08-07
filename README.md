@@ -6,6 +6,7 @@ A small, lightweight, customizable X window manager written in C.
 <hr>
 
 ![screenshot](./screenshot.png)
+> weem/weembar default config, catppuccin macchiato colorscheme. Open windows: nvim, kitty, cmatrix
 
 ## Features
 - Tiling (master and stack)

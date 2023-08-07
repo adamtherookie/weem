@@ -468,7 +468,7 @@ static inline void DrawTimeAndCustom() {
     else
       strftime(time_str, sizeof(time_str), "%a %d %b %H:%M", tm_info);
   
-  int time_x = width - strlen(time_str) * icons_size - icons_padding - bar_padding_x;
+  int time_x = width - strlen(time_str) * icons_size - bar_padding_x;
   int time_y = (bar_size / 2) + (font_size / 2);
 
   XSetForeground(display, DefaultGC(display, DefaultScreen(display)), desktop_unfocus);
