@@ -50,30 +50,23 @@ static inline int is_bar(Display *display, Window window) {
   return false;
 }
 
-static inline void kill(Window w) {
-  if (w == None) return;
+static inline void kill(Window window) {
+  if (window == None) return;
   // Since I have no idea how to handle this, I took (stole) it from:
   // https://github.com/dacousb/clarawm/blob/master/clarawm.c
   XEvent ke;
   ke.type = ClientMessage;
-  ke.xclient.window = w;
+  ke.xclient.window = window;
   ke.xclient.message_type = XInternAtom(display, "WM_PROTOCOLS", True);
   ke.xclient.format = 32;
   ke.xclient.data.l[0] = XInternAtom(display, "WM_DELETE_WINDOW", True);
   ke.xclient.data.l[1] = CurrentTime;
-  XSendEvent(display, w, False, NoEventMask, &ke);
+  XSendEvent(display, window, False, NoEventMask, &ke);
 }
 
 static inline void KillClient() {
   if (current == NULL) return;
-  XEvent ke;
-	ke.type = ClientMessage;
-	ke.xclient.window = current->window;
-	ke.xclient.message_type = XInternAtom(display, "WM_PROTOCOLS", True);
-	ke.xclient.format = 32;
-	ke.xclient.data.l[0] = XInternAtom(display, "WM_DELETE_WINDOW", True);
-	ke.xclient.data.l[1] = CurrentTime;
-	XSendEvent(display, current->window, False, NoEventMask, &ke);
+ 
   kill(current->window);
 }
 
@@ -206,6 +199,25 @@ void TileWindows() {
 static inline void AddWin(Window w) {
   Client *c;
 
+  int tile_or_float;
+
+  Atom type;
+  int format;
+  unsigned long num_items, bytes_after;
+  unsigned char *prop_value = NULL;
+
+  if (XGetWindowProperty(display, w, XInternAtom(display, "_NET_WM_WINDOW_TYPE", False), 0, 1, False, XA_ATOM, &type, &format, &num_items, &bytes_after, &prop_value) == Success) {
+    if (num_items > 0) {
+      Atom hint = ((Atom *)prop_value)[0];
+
+      if (hint == XInternAtom(display, "_NET_WM_WINDOW_TYPE_NORMAL", False)) {
+        tile_or_float = 1;
+      } else {
+        tile_or_float = 0;
+      }
+    }
+  }
+
   if (!(c = (Client *)calloc(1, sizeof(Client))))
     err("calloc error");
   
@@ -217,7 +229,11 @@ static inline void AddWin(Window w) {
     
     head = c;
     head->desktop = current_desktop;
-    head->is_tiled = 1;
+
+    if (tile_or_float)
+      head->is_tiled = 1;
+    else
+      head->is_floating = 1;
   } else {
     Client *t;
     for(t = head; t->next; t = t->next);
@@ -229,7 +245,11 @@ static inline void AddWin(Window w) {
     t->next = c;
 
     t->next->desktop = current_desktop;
-    t->next->is_tiled = 1;
+    
+    if (tile_or_float) 
+      t->next->is_tiled = 1;
+    else
+      t->next->is_floating = 1;
   }
 
   current = c;
@@ -791,7 +811,6 @@ static inline void OnMotionNotify(XEvent e) {
 
 static inline void OnMapRequest(XEvent e) {
   if (is_bar(display, e.xmaprequest.window)) {
-    logger("we have a bar");
     XWindowAttributes attributes;
     XGetWindowAttributes(display, e.xmaprequest.window, &attributes);
 
@@ -810,6 +829,16 @@ static inline void OnMapRequest(XEvent e) {
     TileWindows();
     UpdateCurrent();
   }
+}
+
+static inline void OnUnmapNotify(XEvent e) {
+  XWindowAttributes attributes;
+
+  if (!XGetWindowAttributes(display, e.xunmap.window, &attributes) || attributes.override_redirect)
+    return;
+
+  XUnmapWindow(display, e.xunmap.window);
+  RemoveWindow(e.xunmap.window);
 }
 
 static inline void OnConfigureRequest(XEvent e) {
@@ -866,6 +895,7 @@ void loop() {
       case MotionNotify: OnMotionNotify(e); break;
       case ButtonRelease: start.subwindow = None; break;
       case MapRequest: OnMapRequest(e); break;
+      case UnmapNotify: OnUnmapNotify(e); break;
       case ConfigureRequest: OnConfigureRequest(e); break;
       case DestroyNotify: OnDestroyNotify(e); break;
     }
