@@ -36,33 +36,30 @@ KeyMod right      = { XK_Right, MOD };
 
 KeyMod toggle_bar = { XK_B, MOD };
 
-#define num_keys 8
+#define num_keys 7
 
 KeyMap keymap[num_keys] = {
   // Terminal
   [0].keysym = XK_Return,
-  [0].cmd =  "kitty",
+  [0].cmd =  "xterm",
   // Menu
   [1].keysym = XK_D,      
   [1].cmd = "rofi -show drun",
   // Browser
   [2].keysym = XK_Q,
-  [2].cmd = "qutebrowser",
+  [2].cmd = "firefox",
   // Screenshot
   [3].keysym = XK_G,
-  [3].cmd = "scrot",
-  // Wallpaper
-  [4].keysym = XK_P,
-  [4].cmd = "wp ~/Pictures",// wp is a script I made, change it for whatever wallpaper service you use
+  [3].cmd = "ksnip -r",
   // Audio up
-  [5].keysym = XK_F5,
-  [5].cmd = "amixer -D pulse sset Master 5%+ > /dev/null",
+  [4].keysym = XK_F5,
+  [4].cmd = "amixer -D pulse sset Master 5%+ > /dev/null",
   // Audio down
-  [6].keysym = XK_F4,
-  [6].cmd = "amixer -D pulse sset Master 5%- > /dev/null",
+  [5].keysym = XK_F4,
+  [5].cmd = "amixer -D pulse sset Master 5%- > /dev/null",
   // Audio mute
-  [7].keysym = XK_F1,
-  [7].cmd = "amixer -D pulse sset Master 1+ toggle",
+  [6].keysym = XK_F1,
+  [6].cmd = "amixer -D pulse sset Master 1+ toggle",
 };
 
 ChangeDesktop changedesktop[NUM_DESKTOPS] = {
@@ -127,6 +124,6 @@ unsigned int bar_padding_y    = 0;
 unsigned long font_color      = 0xECEFF4;
 unsigned long bar_color       = 0x181926;
 unsigned int font_size        = 9;
-char *font_name               = "Blex Mono Nerd Font:size=9";
+char *font_name               = "monospace:size=9";
 
 #endif

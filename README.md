@@ -6,7 +6,7 @@ A small, lightweight, customizable X window manager written in C.
 <hr>
 
 ![screenshot](./screenshot.png)
-> weem/weembar default config, catppuccin macchiato colorscheme. Open windows: nvim, kitty, cmatrix. Font is Blex Mono Nerd Font (the nerd font version of IBM Plex Mono)
+> My weem/weembar config, catppuccin macchiato colorscheme. Open windows: nvim, kitty, cmatrix. Font is Blex Mono Nerd Font (the nerd font version of IBM Plex Mono)
 
 ## Features
 - Tiling (master and stack)
@@ -21,7 +21,11 @@ Clone the repo:
 ```sh
 git clone https://github.com/adamtherookie/weem
 ```
-Edit `config.h` to match your preferences. Setup the startup script at `~/.config/weem/autostart.sh` if you wish. If you do, make sure you execute `bar.sh` in the background there to update the status bar. For example, a startup script that launches picom and the bar script:
+Copy `config.def.h` to `config.h`:
+```sh
+cp config.def.h config.h
+```
+Edit `config.h` to match your preferences. Setup the startup script at `~/.config/weem/autostart.sh`. Make sure you execute `bar.sh` in the background there to update the status bar. For example, a startup script that launches picom and the bar script:
 
 ```sh
 #!/bin/sh
