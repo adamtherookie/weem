@@ -500,7 +500,7 @@ static inline void DrawTimeAndCustom() {
 
   int clock_width = strlen(time_str) * icons_size + icons_padding * 2;
 
-  char custom_text[100];
+  char custom_text[500];
   
   char *home_dir = getenv("HOME");
 
