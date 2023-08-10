@@ -7,8 +7,9 @@ do
   network=$(nmcli -t -f NAME connection show --active)
   cpu_usage=$(mpstat 1 1 | awk '/Average:/ {printf "%.0f", 100-$NF}')
   memory_usage=$(free | awk 'NR==2 {printf "%.0f", $3/$2 * 100}')
-  temperature=$(sensors | awk '/Package id 0:/ {print $4}')
-  notifications=$(dunstctl count)
+  # temperature=$(sensors | awk '/Package id 0:/ {print $4}')
+  # notifications=$(dunstctl count)
+  # battery=$(upower -i /org/freedesktop/UPower/devices/battery_BAT0 | grep "percentage" | awk 'NR==2 {print $4}')
   
   echo "Audio: $audio | Disk: $disk_space | CPU: $cpu_usage% | Memory: $memory_usage% | " > ~/.weembar
   sleep 1

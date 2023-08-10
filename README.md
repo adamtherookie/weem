@@ -16,6 +16,16 @@ A small, lightweight, customizable X window manager written in C.
 - Status Bar
 - Autostart script
 
+## Dependencies
+weem itself doesn't require any libraries other than X11, however some bar modules need some tools in order to work:
+- Audio: `amixer`
+- Disk Space: `df`
+- CPU Usage: `mpstat`
+- Memory Usage: `free`
+- Temperature: `sensors`
+- Notifications: `dunst`
+- Battery: `upower`
+
 ## Installing
 Clone the repo:
 ```sh
