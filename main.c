@@ -84,18 +84,20 @@ static inline void UpdateCurrent() {
   for (c = head; c; c = c->next) {
     if (current == c) {
       XSetWindowBorderWidth(display, c->window, border_width);
+
       XSetWindowBorder(display, c->window, border_focus);
       XSetInputFocus(display, c->window, RevertToParent, CurrentTime);
-      XRaiseWindow(display, c->window);
     } else {
       XSetWindowBorder(display, c->window, border_unfocus);
     }
-  }
 
-  for (c = head; c; c = c->next) {
     if (c->is_floating) {
       XRaiseWindow(display, c->window);
     }
+  }
+  
+  if (current && current->is_floating) {
+    XRaiseWindow(display, current->window);
   }
 }
 
