@@ -96,7 +96,7 @@ static inline void UpdateCurrent() {
     }
   }
   
-  if (current && current->is_floating) {
+  if (current && (current->is_floating || current->is_fullscreen)) {
     XRaiseWindow(display, current->window);
   }
 }
@@ -198,6 +198,76 @@ void TileWindows() {
   }
 }
 
+
+static inline void TileWindow() {
+  if(current == NULL) return;
+
+  current->is_fullscreen = 0;
+  current->is_floating = 0;
+  current->is_tiled = 1;
+
+  TileWindows();
+  UpdateCurrent();
+}
+
+static inline void FloatWindow() {
+  if(current == NULL) return;
+
+  current->is_fullscreen = 0;
+  current->is_tiled = 0;
+  current->is_floating = 1;
+
+  TileWindows();
+  UpdateCurrent();
+}
+
+static inline void FullscreenWindow() {
+  if(current == NULL) return;
+
+  if(!current->is_fullscreen) {
+    XWindowAttributes attributes;
+    XGetWindowAttributes(display, current->window, &attributes);
+
+    current->old_x = attributes.x;
+    current->old_y = attributes.y;
+    current->old_w = attributes.width;
+    current->old_h = attributes.height;
+
+    if(current->is_tiled) current->prev_state = 1;
+    else current->prev_state = 2;
+
+    current->is_fullscreen = 1;
+    current->is_tiled = 0;
+    current->is_floating = 0;
+
+    int screen = DefaultScreen(display);
+    int screenWidth = DisplayWidth(display, screen);
+    int screenHeight = DisplayHeight(display, screen);
+
+    XMoveResizeWindow(display, current->window, -border_width, -border_width, screenWidth + border_width, screenHeight + border_width);
+    XMapWindow(display, current->window);
+
+    UpdateCurrent();
+  } else {
+    current->is_fullscreen = 0;
+    
+    if(current->prev_state == 1) {
+      current->is_tiled = 1;
+      current->is_floating = 0;
+
+      TileWindows();
+    } else {
+      current->is_tiled = 0;
+      current->is_floating = 1;
+
+      XMoveResizeWindow(display, current->window, current->old_x, current->old_y, current->old_w, current->old_h);
+      XMapWindow(display, current->window);
+    }
+    UpdateCurrent();
+  }
+}
+
+
 static inline void AddWin(Window w) {
   Client *c;
 
@@ -222,7 +292,12 @@ static inline void AddWin(Window w) {
 
   if (!(c = (Client *)calloc(1, sizeof(Client))))
     err("calloc error");
-  
+ 
+  // Remove fullscreen
+  if (current && current->is_fullscreen) {
+    FullscreenWindow();
+  }
+
   if (head == NULL) {
     // no wins in desktop, so this one will be head
     c->next = NULL;
@@ -359,74 +434,6 @@ static inline void ChangeDesk(int num) {
 
   UpdateCurrent();
   TileWindows();
-}
-
-static inline void TileWindow() {
-  if(current == NULL) return;
-
-  current->is_fullscreen = 0;
-  current->is_floating = 0;
-  current->is_tiled = 1;
-
-  TileWindows();
-  UpdateCurrent();
-}
-
-static inline void FloatWindow() {
-  if(current == NULL) return;
-
-  current->is_fullscreen = 0;
-  current->is_tiled = 0;
-  current->is_floating = 1;
-
-  TileWindows();
-  UpdateCurrent();
-}
-
-static inline void FullscreenWindow() {
-  if(current == NULL) return;
-
-  if(!current->is_fullscreen) {
-    XWindowAttributes attributes;
-    XGetWindowAttributes(display, current->window, &attributes);
-
-    current->old_x = attributes.x;
-    current->old_y = attributes.y;
-    current->old_w = attributes.width;
-    current->old_h = attributes.height;
-
-    if(current->is_tiled) current->prev_state = 1;
-    else current->prev_state = 2;
-
-    current->is_fullscreen = 1;
-    current->is_tiled = 0;
-    current->is_floating = 0;
-
-    int screen = DefaultScreen(display);
-    int screenWidth = DisplayWidth(display, screen);
-    int screenHeight = DisplayHeight(display, screen);
-
-    XMoveResizeWindow(display, current->window, -border_width, -border_width, screenWidth + border_width, screenHeight + border_width);
-    XMapWindow(display, current->window);
-
-    UpdateCurrent();
-  } else {
-    current->is_fullscreen = 0;
-    
-    if(current->prev_state == 1) {
-      current->is_tiled = 1;
-      current->is_floating = 0;
-
-      TileWindows();
-    } else {
-      current->is_tiled = 0;
-      current->is_floating = 1;
-
-      XMoveResizeWindow(display, current->window, current->old_x, current->old_y, current->old_w, current->old_h);
-      XMapWindow(display, current->window);
-    }
-    UpdateCurrent();
-  }
 }
 
 FontStruct create_font(char *font_name, char *color, Window window) {
