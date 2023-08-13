@@ -19,7 +19,6 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX_WINS 16
-#define NUM_DESKTOPS 10
 #define ANSI_COLOR_RED     "\x1b[31m"
 #define ANSI_COLOR_GREEN   "\x1b[32m"
 #define ANSI_COLOR_YELLOW  "\x1b[33m"
@@ -34,15 +33,15 @@ enum {
   STRIPES_HORIZONTAL
 };
 
-typedef struct KeyMap {
-  KeySym keysym;
-  char *cmd;
-} KeyMap;
-
 typedef struct KeyMod {
   KeySym keysym;
   unsigned int mod;
 } KeyMod;
+
+typedef struct KeyMap {
+  KeyMod keymod;
+  char *cmd;
+} KeyMap;
 
 typedef struct ChangeDesktop {
   KeySym keysym;

@@ -541,17 +541,9 @@ static inline void DrawTimeAndCustom() {
   }
 }
 
-/*
-static inline void DrawBarInfo() {
-  XClearWindow(display, bar.window);
-  
-  DrawDesktops();
-  DrawTimeAndCustom();
-}
-*/
-
 void *BarUpdateLoop() {
   while (true) {
+    XClearWindow(display, bar.window);
     DrawDesktops();
     DrawTimeAndCustom();
     XFlush(display);
@@ -683,7 +675,7 @@ static inline void OnKeyPress(XEvent e) {
   key = e.xkey;
 
   for (int i = 0; i < num_keys; i ++) {
-    if (key.keycode == XKeysymToKeycode(display, keymap[i].keysym)) {
+    if (key.keycode == XKeysymToKeycode(display, keymap[i].keymod.keysym) && (key.state ^ keymap[i].keymod.mod) == 0) {
       spawn(keymap[i].cmd);
       break;
     }
@@ -926,7 +918,7 @@ void init() {
 
     // Grab
     for (int i = 0; i < num_keys; i ++) {
-      XGrabKey(display, XKeysymToKeycode(display, keymap[i].keysym), MOD, root, True, GrabModeAsync, GrabModeAsync);
+      XGrabKey(display, XKeysymToKeycode(display, keymap[i].keymod.keysym), keymap[i].keymod.mod, root, True, GrabModeAsync, GrabModeAsync);
     }
 
     for (int i = 0; i < NUM_DESKTOPS; i ++) {

@@ -19,6 +19,8 @@
 
 #define DEFAULT_LAYOUT MASTER_STACK
 
+#define NUM_DESKTOPS 10
+
 KeyMod set_layout_master_stack       = { XK_T, MOD | SHIFT };
 KeyMod set_layout_stripes_vertical   = { XK_V, MOD | SHIFT };
 KeyMod set_layout_stripes_horizontal = { XK_H, MOD | SHIFT };
@@ -40,25 +42,25 @@ KeyMod toggle_bar = { XK_B, MOD };
 
 KeyMap keymap[num_keys] = {
   // Terminal
-  [0].keysym = XK_Return,
+  [0].keymod = { XK_Return, MOD },
   [0].cmd =  "xterm",
   // Menu
-  [1].keysym = XK_D,      
+  [1].keymod = { XK_D, MOD },      
   [1].cmd = "rofi -show drun",
   // Browser
-  [2].keysym = XK_Q,
+  [2].keymod = { XK_Q, MOD },
   [2].cmd = "firefox",
   // Screenshot
-  [3].keysym = XK_G,
+  [3].keymod = { XK_G, MOD },
   [3].cmd = "ksnip -r",
   // Audio up
-  [4].keysym = XK_F5,
+  [4].keymod = { XK_F5, AnyModifier },
   [4].cmd = "amixer -D pulse sset Master 5%+ > /dev/null",
   // Audio down
-  [5].keysym = XK_F4,
+  [5].keymod = { XK_F4, AnyModifier },
   [5].cmd = "amixer -D pulse sset Master 5%- > /dev/null",
   // Audio mute
-  [6].keysym = XK_F1,
+  [6].keymod = { XK_F1, AnyModifier },
   [6].cmd = "amixer -D pulse sset Master 1+ toggle",
 };
 
