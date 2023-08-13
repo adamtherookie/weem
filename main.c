@@ -665,6 +665,8 @@ static inline void OnButtonPress(XEvent e) {
     if ((bar_position == top && start.y <= bar_size) || (bar_position == bottom && start.y >= height - bar_size)) {
       int index = 0;
 
+      if (start.x > bar_desktop_end[NUM_DESKTOPS - 1]) return;
+
       while (index <= NUM_DESKTOPS) {
         if (start.x <= bar_desktop_end[index]) break;
         index ++;
