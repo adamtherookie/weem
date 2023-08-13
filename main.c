@@ -23,6 +23,7 @@ static Client *current = NULL;
 
 static Desktop desktops[NUM_DESKTOPS];
 int current_desktop = 0;
+int bar_desktop_end[NUM_DESKTOPS];
 
 unsigned int error_occurred = 0;
 
@@ -477,7 +478,9 @@ static inline void DrawDesktops() {
     // XDrawString(display, bar.window, bar.font->gc, offset + (font_size / 2.0f), (bar_size / 2) + (font_size / 2), desktop_icons[i], strlen(desktop_icons[i]));    
     
     DrawStr(desktop_icons[i], bar.font, offset + (font_size / 2), (bar_size / 2) + (font_size / 2));
+
     offset += icons_padding + (icons_size * strlen(desktop_icons[i]));
+    if (!bar_desktop_end[i]) bar_desktop_end[i] = offset;
   }
 }
 
@@ -657,7 +660,21 @@ static inline int ErrorHandler(Display *display, XErrorEvent *event) {
 static inline void OnButtonPress(XEvent e) {
   if (e.xbutton.subwindow == None) return;
   start = e.xbutton;
-  
+ 
+  if (show_bar) {
+    if ((bar_position == top && start.y <= bar_size) || (bar_position == bottom && start.y >= height - bar_size)) {
+      int index = 0;
+
+      while (index <= NUM_DESKTOPS) {
+        if (start.x <= bar_desktop_end[index]) break;
+        index ++;
+      }
+
+      ChangeDesk(index);
+      return;
+    }
+  }
+
   // Hacky way to get current client
   Client *c;
 
