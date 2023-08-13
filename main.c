@@ -697,6 +697,12 @@ static inline void OnButtonPress(XEvent e) {
   XGetWindowAttributes(display, start.subwindow, &attr);
 }
 
+static inline void ExitWeem() {
+  system("killall bar.sh");
+  XCloseDisplay(display);
+  exit(0);
+}
+
 static inline void OnKeyPress(XEvent e) {
   key = e.xkey;
 
@@ -781,8 +787,7 @@ static inline void OnKeyPress(XEvent e) {
   }
 
   if (key.keycode == XKeysymToKeycode(display, die.keysym) && (key.state ^ die.mod) == 0) {
-    XCloseDisplay(display);
-    exit(EXIT_SUCCESS);
+    ExitWeem();
   }
 }
 
@@ -1000,7 +1005,6 @@ int main(void) {
   loop();
   XSetErrorHandler(NULL);
 
-  system("killall bar.sh");
-  XCloseDisplay(display);
+  ExitWeem();
   return 0;
 }
