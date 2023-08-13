@@ -24,6 +24,7 @@ static Client *current = NULL;
 static Desktop desktops[NUM_DESKTOPS];
 int current_desktop = 0;
 int bar_desktop_end[NUM_DESKTOPS];
+int time_x;
 
 unsigned int error_occurred = 0;
 
@@ -500,7 +501,7 @@ static inline void DrawTimeAndCustom() {
     else
       strftime(time_str, sizeof(time_str), "%a %d %b %H:%M", tm_info);
   
-  int time_x = width - strlen(time_str) * icons_size - bar_padding_x;
+  time_x = width - strlen(time_str) * icons_size - bar_padding_x;
   int time_y = (bar_size / 2) + (font_size / 2);
 
   XSetForeground(display, DefaultGC(display, DefaultScreen(display)), desktop_unfocus);
@@ -665,7 +666,13 @@ static inline void OnButtonPress(XEvent e) {
     if ((bar_position == top && start.y <= bar_size) || (bar_position == bottom && start.y >= height - bar_size)) {
       int index = 0;
 
-      if (start.x > bar_desktop_end[NUM_DESKTOPS - 1]) return;
+      if (start.x > bar_desktop_end[NUM_DESKTOPS - 1]) {
+        if (start.x >= time_x) {
+          show_seconds ^= 1;
+        }
+
+        return;
+      };
 
       while (index <= NUM_DESKTOPS) {
         if (start.x <= bar_desktop_end[index]) break;
