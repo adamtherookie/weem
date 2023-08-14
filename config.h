@@ -97,8 +97,8 @@ float master_tick             = 0.05;
 
 unsigned int gap_width        = 6;
 unsigned int border_width     = 2;
-unsigned long border_focus    = nord1;
-unsigned long border_unfocus  = nord3;
+unsigned long border_focus    = color12;
+unsigned long border_unfocus  = color4;
 
 // weembar
 unsigned int show_bar         = true;
@@ -110,9 +110,9 @@ unsigned int icons_padding    = 10;
 unsigned int bar_occu_size    = 1;
 unsigned int bar_occu_type    = underline;
 unsigned long desktop_focus    = color12;
-unsigned long desktop_unfocus  = nord1;
-unsigned long text_focus       = nord6;
-unsigned long text_unfocus     = nord6;
+unsigned long desktop_unfocus  = color4;
+unsigned long text_focus       = color15;
+unsigned long text_unfocus     = color14;
 
 float bar_refresh_rate        = 1;
 
@@ -122,13 +122,13 @@ unsigned int show_seconds     = false;
 unsigned int bar_position     = bottom;
 unsigned int bar_size         = 30;
 unsigned int bar_border_size  = 0;
-unsigned long bar_border_color = nord3;
+unsigned long bar_border_color = color6;
 unsigned int bar_padding_x    = 0;
 unsigned int bar_padding_y    = 0;
-unsigned long font_color      = nord6;
-unsigned long bar_color       = nord0;
+unsigned long font_color      = color15;
+unsigned long bar_color       = color8;
 unsigned int font_size        = 12;
-char *font_name               = "JetBrainsMono NF:size=12";
+char *font_name               = "monospace:size=9";
 
 #endif
 
