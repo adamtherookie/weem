@@ -578,8 +578,6 @@ static inline void CreateBar() {
   XSetClassHint(display, bar.window, &classHint);
   
   XSetStandardProperties(display, bar.window, "weembar", "weembar", None, NULL, 0, NULL);
- 
-  print_color(font_color);
 
   XMapWindow(display, bar.window);
   bar.font = create_font(font_name, font_color, bar.window); // TODO: Make it so that it uses an unsigned long as color input
