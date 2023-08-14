@@ -8,7 +8,8 @@ touch ~/.config/weem/autostart.sh
 echo " -> Compiling source code"
 sh build.sh
 echo " -> Installing"
-sudo cp ./weem /usr/bin
+sudo rm /usr/bin/weem
+sudo cp weem /usr/bin/
 
 touch ~/.weembar
 
