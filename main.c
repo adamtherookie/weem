@@ -688,6 +688,16 @@ static inline void OnButtonPress(XEvent e) {
         return;
       };
 
+      if (start.button == 4) {
+        ChangeDesk((current_desktop + NUM_DESKTOPS + 1) % NUM_DESKTOPS);
+        return;
+      }
+
+      if (start.button == 5) {
+        ChangeDesk((current_desktop + NUM_DESKTOPS - 1) % NUM_DESKTOPS);
+        return;
+      }
+
       while (index <= NUM_DESKTOPS) {
         if (start.x <= bar_desktop_end[index]) break;
         index ++;
