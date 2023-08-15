@@ -22,8 +22,8 @@ static Client *head = NULL;
 static Client *current = NULL;
 
 static Desktop desktops[NUM_DESKTOPS];
+static int bar_desktop_end[NUM_DESKTOPS];
 int current_desktop = 0;
-int bar_desktop_end[NUM_DESKTOPS];
 int time_x;
 
 unsigned int error_occurred = 0;
@@ -36,20 +36,6 @@ static inline void logger(char *msg) {
 
 static inline void err(char *msg) {
   printf(ANSI_COLOR_RED " -> weem  ERR:" ANSI_COLOR_RESET " %s\n" , msg);
-}
-
-static inline int is_bar(Display *display, Window window) {
-  if (window == bar.window) return true;
-  
-  XClassHint class_hint;
-  if (XGetClassHint(display, window, &class_hint)) {
-    int is_bar = strcmp(class_hint.res_name, "weembar") == 0;
-    XFree(class_hint.res_name);
-    XFree(class_hint.res_class);
-    return is_bar;
-  }
-
-  return false;
 }
 
 static inline void kill(Window window) {
@@ -66,18 +52,34 @@ static inline void kill(Window window) {
   XSendEvent(display, window, False, NoEventMask, &ke);
 }
 
-static inline void KillClient() {
-  if (current == NULL) return;
- 
-  kill(current->window);
-}
-
 static inline void spawn(char *args) {
   if (fork() == 0) {
     setsid();
     system(args);
     exit(EXIT_SUCCESS);
   }
+}
+
+static inline int IsBar(Window window) {
+  if (window == bar.window) return true;
+  
+  XClassHint class_hint;
+  if (XGetClassHint(display, window, &class_hint)) {
+    int is_bar = strcmp(class_hint.res_name, "weembar") == 0;
+
+    XFree(class_hint.res_name);
+    XFree(class_hint.res_class);
+
+    return is_bar;
+  }
+
+  return false;
+}
+
+static inline void KillClient() {
+  if (current == NULL) return;
+ 
+  kill(current->window);
 }
 
 static inline void UpdateCurrent() {
@@ -202,7 +204,7 @@ void TileWindows() {
 
 
 static inline void TileWindow() {
-  if(current == NULL) return;
+  if (current == NULL) return;
 
   current->is_fullscreen = 0;
   current->is_floating = 0;
@@ -213,7 +215,7 @@ static inline void TileWindow() {
 }
 
 static inline void FloatWindow() {
-  if(current == NULL) return;
+  if (current == NULL) return;
 
   current->is_fullscreen = 0;
   current->is_tiled = 0;
@@ -224,9 +226,9 @@ static inline void FloatWindow() {
 }
 
 static inline void FullscreenWindow() {
-  if(current == NULL) return;
+  if (current == NULL) return;
 
-  if(!current->is_fullscreen) {
+  if (!current->is_fullscreen) {
     XWindowAttributes attributes;
     XGetWindowAttributes(display, current->window, &attributes);
 
@@ -235,7 +237,7 @@ static inline void FullscreenWindow() {
     current->old_w = attributes.width;
     current->old_h = attributes.height;
 
-    if(current->is_tiled) current->prev_state = 1;
+    if (current->is_tiled) current->prev_state = 1;
     else current->prev_state = 2;
 
     current->is_fullscreen = 1;
@@ -253,7 +255,7 @@ static inline void FullscreenWindow() {
   } else {
     current->is_fullscreen = 0;
     
-    if(current->prev_state == 1) {
+    if (current->prev_state == 1) {
       current->is_tiled = 1;
       current->is_floating = 0;
 
@@ -270,7 +272,7 @@ static inline void FullscreenWindow() {
 }
 
 
-static inline void AddWin(Window w) {
+static inline void AddWin(Window window) {
   Client *c;
 
   int tile_or_float;
@@ -280,7 +282,7 @@ static inline void AddWin(Window w) {
   unsigned long num_items, bytes_after;
   unsigned char *prop_value = NULL;
 
-  if (XGetWindowProperty(display, w, XInternAtom(display, "_NET_WM_WINDOW_TYPE", False), 0, 1, False, XA_ATOM, &type, &format, &num_items, &bytes_after, &prop_value) == Success) {
+  if (XGetWindowProperty(display, window, XInternAtom(display, "_NET_WM_WINDOW_TYPE", False), 0, 1, False, XA_ATOM, &type, &format, &num_items, &bytes_after, &prop_value) == Success) {
     if (num_items > 0) {
       Atom hint = ((Atom *)prop_value)[0];
 
@@ -304,7 +306,7 @@ static inline void AddWin(Window w) {
     // no wins in desktop, so this one will be head
     c->next = NULL;
     c->prev = NULL;
-    c->window = w;
+    c->window = window;
     
     head = c;
     head->desktop = current_desktop;
@@ -315,11 +317,11 @@ static inline void AddWin(Window w) {
       head->is_floating = 1;
   } else {
     Client *t;
-    for(t = head; t->next; t = t->next);
+    for (t = head; t->next; t = t->next);
 
     c->next = NULL;
     c->prev = t;
-    c->window = w;
+    c->window = window;
 
     t->next = c;
 
@@ -334,11 +336,11 @@ static inline void AddWin(Window w) {
   current = c;
 }
 
-static inline void RemoveWindow(Window w) {
+static inline void RemoveWindow(Window window) {
   Client *c;
   
-  for(c = head; c; c = c->next) {
-    if (c->window == w) {
+  for (c = head; c; c = c->next) {
+    if (c->window == window) {
       if (c->prev == NULL && c->next == NULL) {
         free(head);
         head = NULL;
@@ -349,7 +351,7 @@ static inline void RemoveWindow(Window w) {
         head = c->next;
         c->next->prev = NULL;
         current = c->next;
-      } else if(c->next == NULL) {
+      } else if (c->next == NULL) {
         c->prev->next = NULL;
         current = c->prev;
       } else {
@@ -449,7 +451,7 @@ XRenderColor LongToXRenderColor(unsigned long color) {
   return xcolor;
 }
 
-FontStruct create_font(char *font_name, unsigned long color, Window window) {
+FontStruct CreateFont(char *font_name, unsigned long color, Window window) {
   FontStruct fs;
 
   XftFont *xft_font = XftFontOpenName(display, DefaultScreen(display), font_name);
@@ -544,7 +546,7 @@ static inline void DrawTimeAndCustom() {
     
     DrawStr(custom_text, bar.font, custom_text_x, custom_text_y);
   } else {
-    logger("nope");
+    err("could not open ~/.weembar");
   }
 }
 
@@ -580,7 +582,7 @@ static inline void CreateBar() {
   XSetStandardProperties(display, bar.window, "weembar", "weembar", None, NULL, 0, NULL);
 
   XMapWindow(display, bar.window);
-  bar.font = create_font(font_name, font_color, bar.window); // TODO: Make it so that it uses an unsigned long as color input
+  bar.font = CreateFont(font_name, font_color, bar.window);
 }
 
 static inline void MoveUp() {
@@ -712,7 +714,7 @@ static inline void OnButtonPress(XEvent e) {
 static inline void ExitWeem() {
   system("killall bar.sh");
   XCloseDisplay(display);
-  exit(0);
+  exit(EXIT_SUCCESS);
 }
 
 static inline void OnKeyPress(XEvent e) {
@@ -805,7 +807,7 @@ static inline void OnKeyPress(XEvent e) {
 
 static inline void OnMotionNotify(XEvent e) {
   if (start.subwindow == None) return;
-  if (is_bar(display, start.subwindow)) return;
+  if (IsBar(start.subwindow)) return;
 
   int xdiff = e.xbutton.x_root - start.x_root;
   int ydiff = e.xbutton.y_root - start.y_root;
@@ -854,14 +856,14 @@ static inline void OnMotionNotify(XEvent e) {
 }
 
 static inline void OnMapRequest(XEvent e) {
-  if (is_bar(display, e.xmaprequest.window)) {
+  if (IsBar(e.xmaprequest.window)) {
     XWindowAttributes attributes;
     XGetWindowAttributes(display, e.xmaprequest.window, &attributes);
 
     XMapWindow(display, e.xmaprequest.window);
     XMoveResizeWindow(display, e.xmaprequest.window, 0, 0, width, attributes.height);
   } else {
-    static XWindowAttributes attributes;
+    XWindowAttributes attributes;
 
     if (!XGetWindowAttributes(display, e.xmaprequest.window, &attributes) || attributes.override_redirect) 
       return;
@@ -899,7 +901,7 @@ static inline void OnConfigureRequest(XEvent e) {
 
   XWindowAttributes attributes;
 
-  if(XGetWindowAttributes(display, event.window, &attributes)) {
+ if (XGetWindowAttributes(display, event.window, &attributes)) {
     XConfigureWindow(display, event.window, event.value_mask, &changes);
   } else {
     err("configuration error");
@@ -910,7 +912,7 @@ static inline void OnDestroyNotify(XEvent e) {
   Client *c;
 
   int i = 0;
-  for(c = head; c; c = c->next) {
+  for (c = head; c; c = c->next) {
     if (e.xdestroywindow.window == c->window) {
       i ++;
     } 
@@ -925,15 +927,13 @@ static inline void OnDestroyNotify(XEvent e) {
 }
 
 void loop() {
-  while(true) {
+  while (true) {
     if (XNextEvent(display, &e) != 0) {
       err("event error");
       break;
     }
 
-    // DrawDesktops();
-
-    switch(e.type) {
+    switch (e.type) {
       case KeyPress: OnKeyPress(e); break;
       case ButtonPress: OnButtonPress(e); break;
       case MotionNotify: OnMotionNotify(e); break;
