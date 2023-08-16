@@ -693,13 +693,13 @@ static inline void OnButtonPress(XEvent e) {
     if ((bar_position == top && start.y <= bar_size) || (bar_position == bottom && start.y >= height - bar_size)) {
       int index = 0;
 
-      if (start.x > bar_desktop_end[NUM_DESKTOPS - 1] && start.button == 1) {
-        if (start.x >= time_x) {
-          show_seconds ^= 1;
-        }
+      if (start.x >= time_x && start.button == 1) {
+        show_seconds ^= 1;
 
         return;
-      };
+      }
+
+      if (start.x > bar_desktop_end[NUM_DESKTOPS - 1]) return;
 
       if (start.button == 4) {
         ChangeDesk((current_desktop + NUM_DESKTOPS + 1) % NUM_DESKTOPS);

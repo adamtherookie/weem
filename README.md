@@ -51,7 +51,7 @@ Then, run the install script (requires root access): `sudo sh install.sh`.
 Upon changing the configuration, you need to rerun the install script for the changes to take place. 
 
 ## Running
-- If you use a session manager such as SDDM or LDM, copy `weem.desktop` to `/usr/share/xsessions`
+- If you use a display manager such as SDDM or LDM, copy `weem.desktop` to `/usr/share/xsessions`
 - If you prefer to use `startx`, add `exec weem` to the end of your `xinitrc`
 
 ## Default Keybindings
