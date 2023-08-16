@@ -71,6 +71,7 @@ Finally, add `exec weem` to the end of your `xinitrc`.
 | Super + Shift + V | Set layout to vertical stripes |
 | Super + Shift + H | Set layout to horizontal stripes |
 | Super + B | Toggle bar |
+| Super + Shift + B | Toggle bar position |
 | Super + K | Kill weem |
 | Super + NUM_KEY | Switch to desktop |
 | Super + Shift + NUM_KEY | Send window to desktop |
