@@ -647,6 +647,19 @@ static inline void DecMaster() {
   TileWindows();
 }
 
+static inline void ToggleBarPosition() {
+  bar_position ^= 1;
+
+  if (bar_position == top) {
+    XMoveWindow(display, bar.window, 0, 0);
+  } else {
+    XMoveWindow(display, bar.window, 0, height - bar_size);
+  }
+
+  UpdateCurrent();
+  TileWindows();
+}
+
 static inline void ToggleBar() {
   if (show_bar) {
     XUnmapWindow(display, bar.window);
@@ -805,6 +818,11 @@ static inline void OnKeyPress(XEvent e) {
         ChangeDesk(changedesktop[i].desktop);
       }
     }
+  }
+
+  if (key.keycode == XKeysymToKeycode(display, toggle_bar_position.keysym) && (key.state ^ toggle_bar_position.mod) == 0) {
+    ToggleBarPosition();
+    return;
   }
 
   if (key.keycode == XKeysymToKeycode(display, toggle_bar.keysym) && (key.state ^ toggle_bar.mod) == 0) {
@@ -1003,6 +1021,7 @@ void init() {
     XGrabKey(display, XKeysymToKeycode(display, set_layout_stripes_vertical.keysym), set_layout_stripes_vertical.mod, root, True, GrabModeAsync, GrabModeAsync);
     
     XGrabKey(display, XKeysymToKeycode(display, toggle_bar.keysym), toggle_bar.mod, root, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(display, XKeysymToKeycode(display, toggle_bar_position.keysym), toggle_bar_position.mod, root, True, GrabModeAsync, GrabModeAsync);
 
     XGrabButton(display, AnyButton, MOD, root, True, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | OwnerGrabButtonMask, GrabModeAsync, GrabModeAsync, None, None);
 

@@ -36,7 +36,8 @@ KeyMod down       = { XK_Down, MOD };
 KeyMod left       = { XK_Left, MOD };
 KeyMod right      = { XK_Right, MOD };
 
-KeyMod toggle_bar = { XK_B, MOD };
+KeyMod toggle_bar          = { XK_B, MOD };
+KeyMod toggle_bar_position = { XK_B, MOD | SHIFT };
 
 #define num_keys 7
 
