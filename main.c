@@ -271,6 +271,20 @@ static inline void FullscreenWindow() {
   }
 }
 
+static inline void SetClientName(Client *client) {
+  if (client == NULL) return;
+
+  char *name = NULL;
+
+  XFetchName(display, client->window, &name);
+
+  if (name) {
+    client->name = strdup(name);
+    XFree(name);
+  } else {
+    client->name = NULL;
+  }
+}
 
 static inline void AddWin(Window window) {
   Client *c;
@@ -332,6 +346,8 @@ static inline void AddWin(Window window) {
     else
       t->next->is_floating = 1;
   }
+
+  SetClientName(c);
 
   current = c;
 }
@@ -471,7 +487,7 @@ static inline void DrawStr(char *string, FontStruct font, int x, int y) {
   XftDrawStringUtf8(font.xft_draw, &font.xft_color, font.xft_font, x, y, (XftChar8 *)string, strlen(string));
 }
 
-static inline void DrawDesktops() {
+static inline void DrawDesktopsAndType() {
   unsigned int offset = icons_offset;
 
   for (unsigned int i = 0; i < NUM_DESKTOPS; i++) {
@@ -491,6 +507,26 @@ static inline void DrawDesktops() {
 
     offset += icons_padding + (icons_size * strlen(desktop_icons[i]));
     if (!bar_desktop_end[i]) bar_desktop_end[i] = offset;
+  }
+
+  XSetForeground(display, DefaultGC(display, DefaultScreen(display)), desktop_unfocus);
+
+  offset += icons_padding;
+
+  if (show_indicators) {
+    if (current) {
+      int indicator = (current->is_tiled) ? (0) : (1);
+
+      XFillRectangle(display, bar.window, DefaultGC(display, DefaultScreen(display)), offset, 0, (int)icons_size * strlen(bar_indicators[indicator]) + icons_padding, bar_size);
+
+      offset += (font_size / 2);
+      DrawStr(bar_indicators[indicator], bar.font, offset, (bar_size / 2) + (font_size / 2));
+      offset += strlen(bar_indicators[indicator]) * icons_size;
+    }
+  }
+
+  if (current && current->name) {
+    DrawStr(current->name, bar.font, offset + icons_padding, (bar_size / 2) + (font_size / 2));
   }
 }
 
@@ -550,11 +586,18 @@ static inline void DrawTimeAndCustom() {
   }
 }
 
+void *CurrentUpdateLoop() {
+  while (true) {
+    SetClientName(current);
+    sleep(1);
+  }
+}
+
 void *BarUpdateLoop() {
   while (true) {
     XClearWindow(display, bar.window);
 
-    DrawDesktops();
+    DrawDesktopsAndType();
     DrawTimeAndCustom();
     
     XFlush(display);
@@ -1043,6 +1086,9 @@ int main(void) {
 
   pthread_t bar_thread;
   pthread_create(&bar_thread, NULL, BarUpdateLoop, NULL);
+
+  pthread_t current_thread;
+  pthread_create(&current_thread, NULL, CurrentUpdateLoop, NULL);
 
   XSetErrorHandler(ErrorHandler);
   loop();

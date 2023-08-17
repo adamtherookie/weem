@@ -66,6 +66,8 @@ typedef struct Client {
 
   int desktop;
 
+  char *name;
+
   Window window;
 } Client;
 

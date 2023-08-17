@@ -110,8 +110,6 @@ unsigned int bar_occu_size    = 3;
 unsigned int bar_occu_type    = underline;
 unsigned int desktop_focus    = 0x7287FD;
 unsigned int desktop_unfocus  = 0x1E2030;
-unsigned int text_focus       = 0x393939;
-unsigned int text_unfocus     = 0xECEFF4;
 
 unsigned int bar_refresh_rate = 10000; // in microseconds: 1s is recommended
 
@@ -128,5 +126,11 @@ unsigned long font_color      = 0xECEFF4;
 unsigned long bar_color       = 0x181926;
 unsigned int font_size        = 9;
 char *font_name               = "monospace:size=9";
+
+unsigned int show_indicators  = false;
+char *bar_indicators[2]       = {
+                                  "[]", // Tiled
+                                  "><>", // Floating
+                                };
 
 #endif
