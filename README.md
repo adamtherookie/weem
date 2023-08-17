@@ -6,7 +6,7 @@ A small, lightweight, customizable X window manager written in C.
 <hr>
 
 ![screenshot](./screenshot.png)
-> My weem/weembar config, catppuccin macchiato colorscheme. Open windows: nvim, kitty, cmatrix. Font is Blex Mono Nerd Font (the nerd font version of IBM Plex Mono)
+> My weem/weembar config, catppuccin macchiato colorscheme. Open windows: nvim, kitty, htop. Font is Blex Mono Nerd Font (the nerd font version of IBM Plex Mono)
 
 ## Features
 - Tiling (master and stack)
