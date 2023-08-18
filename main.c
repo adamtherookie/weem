@@ -127,7 +127,9 @@ void TileWindows() {
     if (tiled_windows == 1) {
       unsigned int x, y, w, h;
 
-      c = head;
+      for (c = head; c; c = c->next) {
+        if (!c->is_fullscreen && !c->is_floating) break;
+      }
 
       x = gap_width;
       y = (bar_position == top) ? (bar_size + gap_width + bar_padding_y) : (gap_width);
@@ -200,6 +202,8 @@ void TileWindows() {
       offset += window_height + gap_width;
     }
   }
+
+  UpdateCurrent();
 }
 
 
@@ -271,6 +275,17 @@ static inline void FullscreenWindow() {
   }
 }
 
+static inline void TrimString(char *string, int max_length) {
+  int length = strlen(string);
+  
+  if (length > max_length) {
+    string[max_length - 3] = '.';
+    string[max_length - 2] = '.';
+    string[max_length - 1] = '.';
+    string[max_length] = '\0';
+  }
+}
+
 static inline void SetClientName(Client *client) {
   if (client == NULL) return;
 
@@ -280,6 +295,7 @@ static inline void SetClientName(Client *client) {
 
   if (name) {
     client->name = strdup(name);
+    TrimString(client->name, max_name_length);
     XFree(name);
   } else {
     client->name = NULL;
@@ -350,6 +366,9 @@ static inline void AddWin(Window window) {
   SetClientName(c);
 
   current = c;
+
+  UpdateCurrent();
+  TileWindows();
 }
 
 static inline void RemoveWindow(Window window) {
@@ -589,7 +608,7 @@ static inline void DrawTimeAndCustom() {
 void *CurrentUpdateLoop() {
   while (true) {
     SetClientName(current);
-    sleep(1);
+    usleep(50000);
   }
 }
 
@@ -942,7 +961,7 @@ static inline void OnMapRequest(XEvent e) {
       return;
     
     AddWin(e.xmaprequest.window);
-    XMoveWindow(display, e.xmaprequest.window, width/2 - attributes.width/2, height/2 - attributes.height/2);
+    // XMoveWindow(display, e.xmaprequest.window, width/2 - attributes.width/2, height/2 - attributes.height/2);
     XMapWindow(display, e.xmaprequest.window);
 
     TileWindows();

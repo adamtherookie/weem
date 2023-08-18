@@ -127,6 +127,8 @@ unsigned long bar_color       = 0x181926;
 unsigned int font_size        = 9;
 char *font_name               = "monospace:size=9";
 
+unsigned int max_name_length  = 40;
+
 unsigned int show_indicators  = false;
 char *bar_indicators[2]       = {
                                   "[]", // Tiled
