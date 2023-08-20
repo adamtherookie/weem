@@ -1049,7 +1049,10 @@ void init() {
     scr_num = XDefaultScreen(display);
 
     height = XDisplayHeight(display, scr_num);
-    width = XDisplayWidth(display, scr_num);
+    width = XDisplayWidth(display, scr_num) * NUM_MONITORS; 
+    
+    // height = 768;
+    // width = 1366 * 2;
 
     // Grab
     for (int i = 0; i < num_keys; i ++) {
