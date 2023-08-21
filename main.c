@@ -1048,12 +1048,9 @@ void init() {
     screen = DefaultScreenOfDisplay(display);
     scr_num = XDefaultScreen(display);
 
-    height = XDisplayHeight(display, scr_num);
-    width = XDisplayWidth(display, scr_num) * NUM_MONITORS; 
+    height = XDisplayHeight(display, scr_num); // if you have multiple monitors, comment out these lines and replace width and height
+    width = XDisplayWidth(display, scr_num);   // with the total width/height of your setup.
     
-    // height = 768;
-    // width = 1366 * 2;
-
     // Grab
     for (int i = 0; i < num_keys; i ++) {
       XGrabKey(display, XKeysymToKeycode(display, keymap[i].keymod.keysym), keymap[i].keymod.mod, root, True, GrabModeAsync, GrabModeAsync);
