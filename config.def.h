@@ -17,6 +17,10 @@
 #define MOD Mod4Mask
 #define SHIFT ShiftMask
 
+// Uncomment this and define width/height for multi-monitor setups
+// #define WIDTH 2732
+// #define HEIGHT 768
+
 #define DEFAULT_LAYOUT MASTER_STACK
 
 #define NUM_DESKTOPS 10
