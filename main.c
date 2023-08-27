@@ -486,15 +486,20 @@ XRenderColor LongToXRenderColor(unsigned long color) {
   return xcolor;
 }
 
-FontStruct CreateFont(char *font_name, unsigned long color, Window window) {
+FontStruct CreateFont(char *font_name, unsigned long color_fg, unsigned long color_selected, unsigned long color_occupied, Window window) {
   FontStruct fs;
 
   XftFont *xft_font = XftFontOpenName(display, DefaultScreen(display), font_name);
 
   XftDraw *xft_draw = XftDrawCreate(display, window, DefaultVisual(display, DefaultScreen(display)), DefaultColormap(display, DefaultScreen(display)));
 
-  XRenderColor xcolor = LongToXRenderColor(color);
-  XftColorAllocValue(display, DefaultVisual(display, CopyFromParent), DefaultColormap(display, CopyFromParent), &xcolor, &fs.xft_color);
+  XRenderColor xcolor_fg = LongToXRenderColor(color_fg);
+  XRenderColor xcolor_selected = LongToXRenderColor(color_selected);
+  XRenderColor xcolor_occupied = LongToXRenderColor(color_occupied);
+
+  XftColorAllocValue(display, DefaultVisual(display, CopyFromParent), DefaultColormap(display, CopyFromParent), &xcolor_fg, &fs.xft_color_fg);
+  XftColorAllocValue(display, DefaultVisual(display, CopyFromParent), DefaultColormap(display, CopyFromParent), &xcolor_selected, &fs.xft_color_selected);
+  XftColorAllocValue(display, DefaultVisual(display, CopyFromParent), DefaultColormap(display, CopyFromParent), &xcolor_occupied, &fs.xft_color_occupied);
 
   fs.xft_font = xft_font;
   fs.xft_draw = xft_draw;
@@ -502,8 +507,18 @@ FontStruct CreateFont(char *font_name, unsigned long color, Window window) {
   return fs;
 }
 
-static inline void DrawStr(char *string, FontStruct font, int x, int y) {
-  XftDrawStringUtf8(font.xft_draw, &font.xft_color, font.xft_font, x, y, (XftChar8 *)string, strlen(string));
+static inline void DrawStr(char *string, FontStruct font, int x, int y, int color_index) {
+  XftColor color;
+
+  if (color_index == 0) {
+    color = font.xft_color_selected;
+  } else if (color_index == 1) {
+    color = font.xft_color_fg;
+  } else if (color_index == 2) {
+    color = font.xft_color_occupied;
+  }
+  
+  XftDrawStringUtf8(font.xft_draw, &color, font.xft_font, x, y, (XftChar8 *)string, strlen(string));
 }
 
 static inline void DrawDesktopsAndType() {
@@ -522,7 +537,7 @@ static inline void DrawDesktopsAndType() {
       }
     }
 
-    DrawStr(desktop_icons[i], bar.font, offset + (font_size / 2), (bar_size / 2) + (font_size / 2));
+    DrawStr(desktop_icons[i], bar.font, offset + (font_size / 2), (bar_size / 2) + (font_size / 2), (i == current_desktop) ? (0) : ((desktops[i].head) ? (2) : (1)));
 
     offset += icons_padding + (icons_size * strlen(desktop_icons[i]));
     if (!bar_desktop_end[i]) bar_desktop_end[i] = offset;
@@ -539,13 +554,13 @@ static inline void DrawDesktopsAndType() {
       XFillRectangle(display, bar.window, DefaultGC(display, DefaultScreen(display)), offset, 0, (int)icons_size * strlen(bar_indicators[indicator]) + icons_padding, bar_size);
 
       offset += (font_size / 2);
-      DrawStr(bar_indicators[indicator], bar.font, offset, (bar_size / 2) + (font_size / 2));
+      DrawStr(bar_indicators[indicator], bar.font, offset, (bar_size / 2) + (font_size / 2), 1);
       offset += strlen(bar_indicators[indicator]) * icons_size;
     }
   }
 
   if (current && current->name) {
-    DrawStr(current->name, bar.font, offset + icons_padding, (bar_size / 2) + (font_size / 2));
+    DrawStr(current->name, bar.font, offset + icons_padding, (bar_size / 2) + (font_size / 2), 1);
   }
 }
 
@@ -571,7 +586,7 @@ static inline void DrawTimeAndCustom() {
   XSetForeground(display, DefaultGC(display, DefaultScreen(display)), desktop_unfocus);
   XFillRectangle(display, bar.window, DefaultGC(display, DefaultScreen(display)), time_x - icons_padding, 0, strlen(time_str) * icons_size + icons_padding, bar_size);
  
-  DrawStr(time_str, bar.font, time_x - icons_padding, time_y);
+  DrawStr(time_str, bar.font, time_x - icons_padding, time_y, 1);
 
   int clock_width = strlen(time_str) * icons_size + icons_padding * 2;
 
@@ -599,7 +614,7 @@ static inline void DrawTimeAndCustom() {
     XSetForeground(display, DefaultGC(display, DefaultScreen(display)), desktop_unfocus);
     XFillRectangle(display, bar.window, DefaultGC(display, DefaultScreen(display)), custom_text_x - icons_padding, 0, custom_text_width + icons_padding, bar_size);
     
-    DrawStr(custom_text, bar.font, custom_text_x, custom_text_y);
+    DrawStr(custom_text, bar.font, custom_text_x, custom_text_y, 1);
   } else {
     err("could not open ~/.weembar");
   }
@@ -644,7 +659,7 @@ static inline void CreateBar() {
   XSetStandardProperties(display, bar.window, "weembar", "weembar", None, NULL, 0, NULL);
 
   XMapWindow(display, bar.window);
-  bar.font = CreateFont(font_name, font_color, bar.window);
+  bar.font = CreateFont(font_name, font_color, font_color_sel, font_color_occu, bar.window);
 }
 
 static inline void MoveUp() {
