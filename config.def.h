@@ -126,7 +126,9 @@ unsigned int bar_border_size  = 0;
 unsigned int bar_border_color = 0xff0000;
 unsigned int bar_padding_x    = 0;
 unsigned int bar_padding_y    = 0;
-unsigned long font_color      = 0xECEFF4;
+unsigned long font_color      = 0xECEFF4; // normal font color
+unsigned long font_color_sel  = 0x000000; // selected desktop font color
+unsigned long font_color_occu = 0x000000; // occupied desktop font color
 unsigned long bar_color       = 0x181926;
 unsigned int font_size        = 9;
 char *font_name               = "monospace:size=9";

@@ -81,7 +81,11 @@ typedef struct Desktop {
 
 typedef struct FontStruct {
   XftFont *xft_font;
-  XftColor xft_color;
+  
+  XftColor xft_color_fg;
+  XftColor xft_color_selected;
+  XftColor xft_color_occupied;
+
   XftDraw *xft_draw;
 } FontStruct;
 
