@@ -171,6 +171,8 @@ void TileWindows() {
       if (c->is_tiled) windows ++;
     }
 
+    if (windows == 0) return;
+
     int window_width = (width - (windows + 1) * gap_width) / windows;
     int window_height = height - bar_size - 3 * gap_width;
 
@@ -189,6 +191,8 @@ void TileWindows() {
     for (c = head; c; c = c->next) {
       if (c->is_tiled) windows ++;
     }
+  
+    if (windows == 0) return;
 
     int window_width = width - gap_width * 2;
     int window_height = (height - bar_size - gap_width - (windows + 1) * gap_width) / windows;
