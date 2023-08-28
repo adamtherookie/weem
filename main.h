@@ -30,7 +30,8 @@
 enum {
   MASTER_STACK,
   STRIPES_VERTICAL,
-  STRIPES_HORIZONTAL
+  STRIPES_HORIZONTAL,
+  FLOATING
 };
 
 typedef struct KeyMod {

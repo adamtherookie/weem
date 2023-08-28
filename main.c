@@ -106,7 +106,7 @@ static inline void UpdateCurrent() {
 }
 
 void TileWindows() {
-  if (desktops[current_desktop].layout == MASTER_STACK) {
+  if (desktops[current_desktop].layout == MASTER_STACK || desktops[current_desktop].layout == FLOATING) {
     unsigned int tiled_windows = 0;
     unsigned int stack_windows = 0;
     Client *c;
@@ -326,6 +326,10 @@ static inline void AddWin(Window window) {
         tile_or_float = 0;
       }
     }
+  }
+
+  if (desktops[current_desktop].layout == FLOATING) {
+    tile_or_float = 0;
   }
 
   if (!(c = (Client *)calloc(1, sizeof(Client))))
@@ -851,6 +855,12 @@ static inline void OnKeyPress(XEvent e) {
     return;
   }
 
+  if (key.keycode == XKeysymToKeycode(display, set_layout_floating.keysym) && (key.state ^ set_layout_floating.mod) == 0) {
+    desktops[current_desktop].layout = FLOATING;
+    TileWindows();
+    return;
+  }
+
   if (key.keycode == XKeysymToKeycode(display, kill_win.keysym) && (key.state ^ kill_win.mod) == 0) {
     KillClient();
     return;
@@ -1109,7 +1119,8 @@ void init() {
     XGrabKey(display, XKeysymToKeycode(display, set_layout_master_stack.keysym), set_layout_master_stack.mod, root, True, GrabModeAsync, GrabModeAsync);
     XGrabKey(display, XKeysymToKeycode(display, set_layout_stripes_horizontal.keysym), set_layout_stripes_horizontal.mod, root, True, GrabModeAsync, GrabModeAsync);    
     XGrabKey(display, XKeysymToKeycode(display, set_layout_stripes_vertical.keysym), set_layout_stripes_vertical.mod, root, True, GrabModeAsync, GrabModeAsync);
-    
+    XGrabKey(display, XKeysymToKeycode(display, set_layout_floating.keysym), set_layout_floating.mod, root, True, GrabModeAsync, GrabModeAsync);
+
     XGrabKey(display, XKeysymToKeycode(display, toggle_bar.keysym), toggle_bar.mod, root, True, GrabModeAsync, GrabModeAsync);
     XGrabKey(display, XKeysymToKeycode(display, toggle_bar_position.keysym), toggle_bar_position.mod, root, True, GrabModeAsync, GrabModeAsync);
 

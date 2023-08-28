@@ -28,6 +28,7 @@
 KeyMod set_layout_master_stack       = { XK_T, MOD | SHIFT };
 KeyMod set_layout_stripes_vertical   = { XK_V, MOD | SHIFT };
 KeyMod set_layout_stripes_horizontal = { XK_H, MOD | SHIFT };
+KeyMod set_layout_floating           = { XK_F, MOD | SHIFT };
 
 KeyMod kill_win   = { XK_W, MOD };
 KeyMod fullscreen = { XK_F, MOD };
