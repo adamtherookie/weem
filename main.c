@@ -732,6 +732,18 @@ static inline void DecMaster() {
   TileWindows();
 }
 
+static inline void IncGapWidth() {
+  gap_width += 1;
+  gap_width = MIN(gap_width, max_gap_width);
+  TileWindows();
+}
+
+static inline void DecGapWidth() {
+  gap_width -= 1;
+  gap_width = MAX(gap_width, min_gap_width);
+  TileWindows();
+}
+
 static inline void ToggleBarPosition() {
   bar_position ^= 1;
 
@@ -893,6 +905,16 @@ static inline void OnKeyPress(XEvent e) {
 
   if (key.keycode == XKeysymToKeycode(display, right.keysym) && (key.state ^ right.mod) == 0) {
     IncMaster();
+    return;
+  }
+
+  if (key.keycode == XKeysymToKeycode(display, inc_gap_width.keysym) && (key.state ^ inc_gap_width.mod) == 0) {
+    IncGapWidth();
+    return;
+  }
+
+  if (key.keycode == XKeysymToKeycode(display, dec_gap_width.keysym) && (key.state ^ dec_gap_width.mod) == 0) {
+    DecGapWidth();
     return;
   }
 
@@ -1123,6 +1145,9 @@ void init() {
 
     XGrabKey(display, XKeysymToKeycode(display, toggle_bar.keysym), toggle_bar.mod, root, True, GrabModeAsync, GrabModeAsync);
     XGrabKey(display, XKeysymToKeycode(display, toggle_bar_position.keysym), toggle_bar_position.mod, root, True, GrabModeAsync, GrabModeAsync);
+
+    XGrabKey(display, XKeysymToKeycode(display, inc_gap_width.keysym), inc_gap_width.mod, root, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(display, XKeysymToKeycode(display, dec_gap_width.keysym), inc_gap_width.mod, root, True, GrabModeAsync, GrabModeAsync);
 
     XGrabButton(display, AnyButton, MOD, root, True, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | OwnerGrabButtonMask, GrabModeAsync, GrabModeAsync, None, None);
 

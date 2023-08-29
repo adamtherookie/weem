@@ -100,6 +100,11 @@ float master_size             = 0.6;
 float master_tick             = 0.05;
 
 unsigned int gap_width        = 6;
+KeyMod inc_gap_width          = { XK_plus, MOD };
+KeyMod dec_gap_width          = { XK_minus, MOD };
+unsigned int max_gap_width    = 40;
+unsigned int min_gap_width    = 1;
+
 unsigned int border_width     = 2;
 unsigned long border_focus    = 0x7287FD;
 unsigned long border_unfocus  = 0x1E2030;
