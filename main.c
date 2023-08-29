@@ -964,17 +964,22 @@ static inline void OnMotionNotify(XEvent e) {
     if (snap) {
       if (new_x < snap_threshold) {
         new_x = 0;
-      }
-      else if (new_x > max_x - snap_threshold) {
+      } else if (new_x > max_x - snap_threshold && new_x < max_x + snap_threshold) {
         new_x = max_x;
       }
 
-      if (new_y < snap_threshold) {
+      if (new_y < snap_threshold + ((bar_position == top) ? (bar_size) : (0))) {
         new_y = 0;
-      }
 
-      else if (new_y > max_y - snap_threshold) {
+        if (bar_position == top) {
+          new_y = bar_size;
+        }
+      } else if (new_y > max_y - ((bar_position == bottom) ? (bar_size) : (0)) - snap_threshold && new_y < max_y - ((bar_position == bottom) ? (bar_size) : (0)) + snap_threshold) {
         new_y = max_y;
+
+        if (bar_position == bottom) {
+          new_y = max_y - bar_size;
+        }
       }
     }
 
