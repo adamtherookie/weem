@@ -77,6 +77,7 @@ typedef struct Desktop {
   Client *current;
 
   float master;
+  int gap_width;
   int layout;
 } Desktop;
 

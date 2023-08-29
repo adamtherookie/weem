@@ -131,15 +131,15 @@ void TileWindows() {
         if (!c->is_fullscreen && !c->is_floating) break;
       }
 
-      x = gap_width;
-      y = (bar_position == top) ? (bar_size + gap_width + bar_padding_y) : (gap_width);
-      w = width - (2 * gap_width) - (2 * border_width);
-      h = win_height - (2 * gap_width) - (2 * border_width);
+      x = desktops[current_desktop].gap_width;
+      y = (bar_position == top) ? (bar_size + desktops[current_desktop].gap_width + bar_padding_y) : (desktops[current_desktop].gap_width);
+      w = width - (2 * desktops[current_desktop].gap_width) - (2 * border_width);
+      h = win_height - (2 * desktops[current_desktop].gap_width) - (2 * border_width);
 
       XMoveResizeWindow(display, c->window, x, y, w, h);
     } else {
-      unsigned int master_width = (width * desktops[current_desktop].master) - (gap_width * 2);
-      unsigned int stack_width = (width * (1 - desktops[current_desktop].master)) - (gap_width * 2);
+      unsigned int master_width = (width * desktops[current_desktop].master) - (desktops[current_desktop].gap_width * 2);
+      unsigned int stack_width = (width * (1 - desktops[current_desktop].master)) - (desktops[current_desktop].gap_width * 2);
 
       unsigned int n = 0;
       for (c = head; c; c = c->next) {
@@ -147,15 +147,15 @@ void TileWindows() {
           unsigned int x, y, w, h;
 
           if (n == 0) {
-            x = gap_width;
-            y = (bar_position == top) ? (bar_size + gap_width + bar_padding_y) : (gap_width);
+            x = desktops[current_desktop].gap_width;
+            y = (bar_position == top) ? (bar_size + desktops[current_desktop].gap_width + bar_padding_y) : (desktops[current_desktop].gap_width);
             w = master_width - (border_width * 2);
-            h = win_height - (border_width * 2) - (gap_width * 2);
+            h = win_height - (border_width * 2) - (desktops[current_desktop].gap_width * 2);
           } else { 
             x = width * desktops[current_desktop].master;
-            w = stack_width - (border_width * 2) + (gap_width);
-            h = (win_height - (2 * border_width * stack_windows) - gap_width * (stack_windows + 1)) / stack_windows;
-            y = ((bar_position == top) ? (bar_size + gap_width + bar_padding_y) : (gap_width)) + ((n - 1) * (h + gap_width + (2 * border_width)));
+            w = stack_width - (border_width * 2) + (desktops[current_desktop].gap_width);
+            h = (win_height - (2 * border_width * stack_windows) - desktops[current_desktop].gap_width * (stack_windows + 1)) / stack_windows;
+            y = ((bar_position == top) ? (bar_size + desktops[current_desktop].gap_width + bar_padding_y) : (desktops[current_desktop].gap_width)) + ((n - 1) * (h + desktops[current_desktop].gap_width + (2 * border_width)));
           }
 
           XMoveResizeWindow(display, c->window, x, y, w, h);
@@ -173,16 +173,16 @@ void TileWindows() {
 
     if (windows == 0) return;
 
-    int window_width = (width - (windows + 1) * gap_width) / windows;
-    int window_height = height - bar_size - 3 * gap_width;
+    int window_width = (width - (windows + 1) * desktops[current_desktop].gap_width) / windows;
+    int window_height = height - bar_size - 3 * desktops[current_desktop].gap_width;
 
-    int offset = gap_width;
+    int offset = desktops[current_desktop].gap_width;
 
     for (c = head; c; c = c->next) {
       if (!c->is_tiled) continue;
 
-      XMoveResizeWindow(display, c->window, offset, gap_width, window_width, window_height);
-      offset += window_width + gap_width;
+      XMoveResizeWindow(display, c->window, offset, desktops[current_desktop].gap_width, window_width, window_height);
+      offset += window_width + desktops[current_desktop].gap_width;
     }
   } else if (desktops[current_desktop].layout = STRIPES_HORIZONTAL) {
     int windows = 0;
@@ -194,16 +194,16 @@ void TileWindows() {
   
     if (windows == 0) return;
 
-    int window_width = width - gap_width * 2;
-    int window_height = (height - bar_size - gap_width - (windows + 1) * gap_width) / windows;
+    int window_width = width - desktops[current_desktop].gap_width * 2;
+    int window_height = (height - bar_size - desktops[current_desktop].gap_width - (windows + 1) * gap_width) / windows;
 
-    int offset = gap_width;
+    int offset = desktops[current_desktop].gap_width;
 
     for (c = head; c; c = c->next) {
       if (!c->is_tiled) continue;
 
-      XMoveResizeWindow(display, c->window, gap_width, offset, window_width, window_height);
-      offset += window_height + gap_width;
+      XMoveResizeWindow(display, c->window, desktops[current_desktop].gap_width, offset, window_width, window_height);
+      offset += window_height + desktops[current_desktop].gap_width;
     }
   }
 
@@ -733,14 +733,14 @@ static inline void DecMaster() {
 }
 
 static inline void IncGapWidth() {
-  gap_width += 1;
-  gap_width = MIN(gap_width, max_gap_width);
+  desktops[current_desktop].gap_width += 1;
+  desktops[current_desktop].gap_width = MIN(desktops[current_desktop].gap_width, max_gap_width);
   TileWindows();
 }
 
 static inline void DecGapWidth() {
-  gap_width -= 1;
-  gap_width = MAX(gap_width, min_gap_width);
+  desktops[current_desktop].gap_width -= 1;
+  desktops[current_desktop].gap_width = MAX(desktops[current_desktop].gap_width, min_gap_width);
   TileWindows();
 }
 
@@ -1122,6 +1122,7 @@ void init() {
       desktops[i].head = head;
       desktops[i].current = current;
       desktops[i].master = master_size;
+      desktops[i].gap_width = gap_width;
       desktops[i].layout = DEFAULT_LAYOUT;
     }
 
