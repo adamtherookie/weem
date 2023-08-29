@@ -990,7 +990,7 @@ static inline void OnMapRequest(XEvent e) {
       return;
     
     AddWin(e.xmaprequest.window);
-    // XMoveWindow(display, e.xmaprequest.window, width/2 - attributes.width/2, height/2 - attributes.height/2);
+    XMoveWindow(display, e.xmaprequest.window, width/2 - attributes.width/2, height/2 - attributes.height/2);
     XMapWindow(display, e.xmaprequest.window);
 
     TileWindows();
