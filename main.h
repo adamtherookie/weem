@@ -90,11 +90,22 @@ typedef struct FontStruct {
 
   XftDraw *xft_draw;
 } FontStruct;
-
 typedef struct Bar {
   Window window;
   FontStruct font;
 } Bar;
+
+typedef struct Colorscheme {
+  unsigned long border_focus;
+  unsigned long border_unfocus;
+  unsigned long desktop_focus;
+  unsigned long desktop_unfocus;
+  unsigned long bar_border;
+  unsigned long bar_color;
+  unsigned long font_color;
+  unsigned long font_color_sel;
+  unsigned long font_color_occu;
+} Colorscheme;
 
 #endif
 

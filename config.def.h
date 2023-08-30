@@ -44,6 +44,9 @@ KeyMod right      = { XK_Right, MOD };
 KeyMod toggle_bar          = { XK_B, MOD };
 KeyMod toggle_bar_position = { XK_B, MOD | SHIFT };
 
+KeyMod cycle_colorscheme_up   = { XK_C, MOD };
+KeyMod cycle_colorscheme_down = { XK_C, MOD | SHIFT };
+
 #define num_keys 7
 
 KeyMap keymap[num_keys] = {
@@ -106,8 +109,6 @@ unsigned int max_gap_width    = 40;
 unsigned int min_gap_width    = 1;
 
 unsigned int border_width     = 2;
-unsigned long border_focus    = 0x7287FD;
-unsigned long border_unfocus  = 0x1E2030;
 
 // weembar
 unsigned int show_bar         = true;
@@ -118,8 +119,6 @@ unsigned int icons_size       = 7;
 unsigned int icons_padding    = 10; // for best results, make it (icons_size + (font_size / 2))
 unsigned int bar_occu_size    = 3;
 unsigned int bar_occu_type    = underline;
-unsigned int desktop_focus    = 0x7287FD;
-unsigned int desktop_unfocus  = 0x1E2030;
 
 unsigned int bar_refresh_rate = 10000; // in microseconds: 1s is recommended
 
@@ -129,13 +128,8 @@ unsigned int show_seconds     = false;
 unsigned int bar_position     = bottom;
 unsigned int bar_size         = 30;
 unsigned int bar_border_size  = 0;
-unsigned int bar_border_color = 0xff0000;
 unsigned int bar_padding_x    = 0;
 unsigned int bar_padding_y    = 0;
-unsigned long font_color      = 0xECEFF4; // normal font color
-unsigned long font_color_sel  = 0x000000; // selected desktop font color
-unsigned long font_color_occu = 0x000000; // occupied desktop font color
-unsigned long bar_color       = 0x181926;
 unsigned int font_size        = 9;
 char *font_name               = "monospace:size=9";
 
@@ -146,5 +140,32 @@ char *bar_indicators[2]       = {
                                   "[]", // Tiled
                                   "><>", // Floating
                                 };
+
+// Colorschemes
+#define NUM_COLORSCHEMES 2
+Colorscheme colorschemes[NUM_COLORSCHEMES] = {
+  (Colorscheme){
+    .border_focus    = 0x7287FD,
+    .border_unfocus  = 0x1E2030,
+    .desktop_focus   = 0x7287FD,
+    .desktop_unfocus = 0x1E2030,
+    .bar_border      = 0x181296,
+    .bar_color       = 0x181296,
+    .font_color      = 0xFFFFFF,
+    .font_color_sel  = 0x363A4F,
+    .font_color_occu = 0x181926,
+  },
+  (Colorscheme){
+    .border_focus    = 0x7287fD,
+    .border_unfocus  = 0x9CA0B0,
+    .desktop_focus   = 0x7287FD,
+    .desktop_unfocus = 0x9CA0B0,
+    .bar_border      = 0xDCE0E8,
+    .bar_color       = 0xDCE0E8,
+    .font_color      = 0x4C4F69,
+    .font_color_sel  = 0x4C4F69,
+    .font_color_occu = 0x4C4F69,
+  }
+}
 
 #endif

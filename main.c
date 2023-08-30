@@ -24,11 +24,14 @@ static Client *current = NULL;
 static Desktop desktops[NUM_DESKTOPS];
 static int bar_desktop_end[NUM_DESKTOPS];
 int current_desktop = 0;
+int current_colorscheme = 0;
 int time_x;
 
 unsigned int error_occurred = 0;
 
 int o_bar_size;
+
+//int total_bar_size = bar_size + bar_padding_y + (bar_border_size * 2);
 
 static inline void logger(char *msg) {
   printf(ANSI_COLOR_GREEN " -> weem INFO:" ANSI_COLOR_RESET " %s\n", msg);
@@ -89,10 +92,10 @@ static inline void UpdateCurrent() {
     if (current == c) {
       XSetWindowBorderWidth(display, c->window, border_width);
 
-      XSetWindowBorder(display, c->window, border_focus);
+      XSetWindowBorder(display, c->window, colorschemes[current_colorscheme].border_focus);
       XSetInputFocus(display, c->window, RevertToParent, CurrentTime);
     } else {
-      XSetWindowBorder(display, c->window, border_unfocus);
+      XSetWindowBorder(display, c->window, colorschemes[current_colorscheme].border_unfocus);
     }
 
     if (c->is_floating) {
@@ -105,7 +108,7 @@ static inline void UpdateCurrent() {
   }
 }
 
-void TileWindows() {
+static inline void TileWindows() {
   if (desktops[current_desktop].layout == MASTER_STACK || desktops[current_desktop].layout == FLOATING) {
     unsigned int tiled_windows = 0;
     unsigned int stack_windows = 0;
@@ -118,7 +121,7 @@ void TileWindows() {
     }
 
     stack_windows = tiled_windows - 1;
-    unsigned int win_height = height - bar_size - bar_padding_y;
+    unsigned int win_height = height - bar_size - bar_padding_y - bar_border_size;
 
     if (tiled_windows == 0) {
       return;
@@ -132,7 +135,7 @@ void TileWindows() {
       }
 
       x = desktops[current_desktop].gap_width;
-      y = (bar_position == top) ? (bar_size + desktops[current_desktop].gap_width + bar_padding_y) : (desktops[current_desktop].gap_width);
+      y = (bar_position == top) ? (bar_size + desktops[current_desktop].gap_width + bar_padding_y + (bar_border_size * 2)) : (desktops[current_desktop].gap_width);
       w = width - (2 * desktops[current_desktop].gap_width) - (2 * border_width);
       h = win_height - (2 * desktops[current_desktop].gap_width) - (2 * border_width);
 
@@ -533,11 +536,11 @@ static inline void DrawDesktopsAndType() {
   unsigned int offset = icons_offset;
 
   for (unsigned int i = 0; i < NUM_DESKTOPS; i++) {
-    XSetForeground(display, DefaultGC(display, DefaultScreen(display)), (i == current_desktop) ? desktop_focus : desktop_unfocus);
+    XSetForeground(display, DefaultGC(display, DefaultScreen(display)), (i == current_desktop) ? colorschemes[current_colorscheme].desktop_focus : colorschemes[current_colorscheme].desktop_unfocus);
     XFillRectangle(display, bar.window, DefaultGC(display, DefaultScreen(display)), offset, 0, (int)icons_size * strlen(desktop_icons[i]) + icons_padding, bar_size);
 
     if (desktops[i].head) {
-      XSetForeground(display, DefaultGC(display, DefaultScreen(display)), desktop_focus);
+      XSetForeground(display, DefaultGC(display, DefaultScreen(display)), colorschemes[current_colorscheme].desktop_focus);
       if (bar_occu_type == overline) {
         XFillRectangle(display, bar.window, DefaultGC(display, DefaultScreen(display)), offset, 0, (int)icons_size * strlen(desktop_icons[i]) + icons_padding, bar_occu_size);
       } else {
@@ -551,7 +554,7 @@ static inline void DrawDesktopsAndType() {
     if (!bar_desktop_end[i]) bar_desktop_end[i] = offset;
   }
 
-  XSetForeground(display, DefaultGC(display, DefaultScreen(display)), desktop_unfocus);
+  XSetForeground(display, DefaultGC(display, DefaultScreen(display)), colorschemes[current_colorscheme].desktop_unfocus);
 
   offset += icons_padding;
 
@@ -588,10 +591,10 @@ static inline void DrawTimeAndCustom() {
     else
       strftime(time_str, sizeof(time_str), "%a %d %b %H:%M", tm_info);
   
-  time_x = width - strlen(time_str) * icons_size - bar_padding_x;
+  time_x = width - strlen(time_str) * icons_size - bar_padding_x - bar_border_size;
   int time_y = (bar_size / 2) + (font_size / 2);
 
-  XSetForeground(display, DefaultGC(display, DefaultScreen(display)), desktop_unfocus);
+  XSetForeground(display, DefaultGC(display, DefaultScreen(display)), colorschemes[current_colorscheme].desktop_unfocus);
   XFillRectangle(display, bar.window, DefaultGC(display, DefaultScreen(display)), time_x - icons_padding, 0, strlen(time_str) * icons_size + icons_padding, bar_size);
  
   DrawStr(time_str, bar.font, time_x - icons_padding, time_y, 1);
@@ -619,7 +622,7 @@ static inline void DrawTimeAndCustom() {
     int custom_text_x = time_x - custom_text_width - icons_padding;
     int custom_text_y = (bar_size / 2) + (font_size / 2);
 
-    XSetForeground(display, DefaultGC(display, DefaultScreen(display)), desktop_unfocus);
+    
     XFillRectangle(display, bar.window, DefaultGC(display, DefaultScreen(display)), custom_text_x - icons_padding, 0, custom_text_width + icons_padding, bar_size);
     
     DrawStr(custom_text, bar.font, custom_text_x, custom_text_y, 1);
@@ -653,9 +656,9 @@ static inline void CreateBar() {
   if (!show_bar) return;
 
   if (bar_position == top)
-    bar.window = XCreateSimpleWindow(display, root, bar_padding_x, bar_padding_y, width - (bar_padding_x * 2), bar_size, bar_border_size, bar_border_color, bar_color);
+    bar.window = XCreateSimpleWindow(display, root, bar_padding_x, bar_padding_y + bar_border_size, width - (bar_padding_x * 2) - (bar_border_size * 2), bar_size, bar_border_size, colorschemes[current_colorscheme].bar_border, colorschemes[current_colorscheme].bar_color);
   else
-    bar.window = XCreateSimpleWindow(display, root, bar_padding_x, height - bar_size - bar_padding_y, width - (bar_padding_x * 2), bar_size, bar_border_size, bar_border_color, bar_color);
+    bar.window = XCreateSimpleWindow(display, root, bar_padding_x, height - bar_size - bar_padding_y - (bar_border_size * 2), width - (bar_padding_x * 2) - (bar_border_size * 2), bar_size, bar_border_size, colorschemes[current_colorscheme].bar_border, colorschemes[current_colorscheme].bar_color);
   
   XSelectInput(display, bar.window, SubstructureRedirectMask | SubstructureNotifyMask);
 
@@ -667,7 +670,7 @@ static inline void CreateBar() {
   XSetStandardProperties(display, bar.window, "weembar", "weembar", None, NULL, 0, NULL);
 
   XMapWindow(display, bar.window);
-  bar.font = CreateFont(font_name, font_color, font_color_sel, font_color_occu, bar.window);
+  bar.font = CreateFont(font_name, colorschemes[current_colorscheme].font_color, colorschemes[current_colorscheme].font_color_sel, colorschemes[current_colorscheme].font_color_occu, bar.window);
 }
 
 static inline void MoveUp() {
@@ -744,13 +747,37 @@ static inline void DecGapWidth() {
   TileWindows();
 }
 
+static inline void CycleColorschemeUp() {
+  current_colorscheme = (current_colorscheme + 1) % NUM_COLORSCHEMES;
+  XftFontClose(display, bar.font.xft_font);
+  XDestroyWindow(display, bar.window);
+
+  CreateBar();
+  bar.font = CreateFont(font_name, colorschemes[current_colorscheme].font_color, colorschemes[current_colorscheme].font_color_sel, colorschemes[current_colorscheme].font_color_occu, bar.window);
+
+  UpdateCurrent();
+  TileWindows();
+}
+
+static inline void CycleColorschemeDown() {
+  current_colorscheme = (NUM_COLORSCHEMES + current_colorscheme - 1) % NUM_COLORSCHEMES;
+  XftFontClose(display, bar.font.xft_font);
+  XDestroyWindow(display, bar.window);
+
+  CreateBar();
+  bar.font = CreateFont(font_name, colorschemes[current_colorscheme].font_color, colorschemes[current_colorscheme].font_color_sel, colorschemes[current_colorscheme].font_color_occu, bar.window);
+
+  UpdateCurrent();
+  TileWindows();
+}
+
 static inline void ToggleBarPosition() {
   bar_position ^= 1;
 
   if (bar_position == top) {
-    XMoveWindow(display, bar.window, 0, 0);
+    XMoveWindow(display, bar.window, bar_padding_x, bar_padding_y);
   } else {
-    XMoveWindow(display, bar.window, 0, height - bar_size);
+    XMoveWindow(display, bar.window, bar_padding_x, height - bar_size - bar_padding_y - (bar_border_size * 2));
   }
 
   UpdateCurrent();
@@ -915,6 +942,16 @@ static inline void OnKeyPress(XEvent e) {
 
   if (key.keycode == XKeysymToKeycode(display, dec_gap_width.keysym) && (key.state ^ dec_gap_width.mod) == 0) {
     DecGapWidth();
+    return;
+  }
+
+  if (key.keycode == XKeysymToKeycode(display, cycle_colorscheme_up.keysym) && (key.state ^ cycle_colorscheme_up.mod) == 0) {
+    CycleColorschemeUp();
+    return;
+  }
+
+  if (key.keycode == XKeysymToKeycode(display, cycle_colorscheme_down.keysym) && (key.state ^ cycle_colorscheme_down.mod) == 0) {
+    CycleColorschemeDown();
     return;
   }
 
@@ -1154,6 +1191,9 @@ void init() {
 
     XGrabKey(display, XKeysymToKeycode(display, inc_gap_width.keysym), inc_gap_width.mod, root, True, GrabModeAsync, GrabModeAsync);
     XGrabKey(display, XKeysymToKeycode(display, dec_gap_width.keysym), inc_gap_width.mod, root, True, GrabModeAsync, GrabModeAsync);
+
+    XGrabKey(display, XKeysymToKeycode(display, cycle_colorscheme_up.keysym), cycle_colorscheme_up.mod, root, True, GrabModeAsync, GrabModeAsync);
+    XGrabKey(display, XKeysymToKeycode(display, cycle_colorscheme_down.keysym), cycle_colorscheme_down.mod, root, True, GrabModeAsync, GrabModeAsync);
 
     XGrabButton(display, AnyButton, MOD, root, True, ButtonPressMask | ButtonReleaseMask | PointerMotionMask | OwnerGrabButtonMask, GrabModeAsync, GrabModeAsync, None, None);
 
