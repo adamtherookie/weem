@@ -15,6 +15,7 @@ A small, lightweight, customizable X window manager written in C.
 - Multiple Layouts
 - Status Bar
 - Autostart script
+- Multiple Colorschemes
 
 ## Dependencies
 weem itself doesn't require any libraries other than X11, however some bar modules need some tools in order to work:
