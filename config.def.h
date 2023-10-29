@@ -166,6 +166,6 @@ Colorscheme colorschemes[NUM_COLORSCHEMES] = {
     .font_color_sel  = 0x4C4F69,
     .font_color_occu = 0x4C4F69,
   }
-}
+};
 
 #endif

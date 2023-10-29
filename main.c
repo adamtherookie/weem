@@ -187,7 +187,7 @@ static inline void TileWindows() {
       XMoveResizeWindow(display, c->window, offset, desktops[current_desktop].gap_width, window_width, window_height);
       offset += window_width + desktops[current_desktop].gap_width;
     }
-  } else if (desktops[current_desktop].layout = STRIPES_HORIZONTAL) {
+  } else if (desktops[current_desktop].layout == STRIPES_HORIZONTAL) {
     int windows = 0;
     Client *c;
 
